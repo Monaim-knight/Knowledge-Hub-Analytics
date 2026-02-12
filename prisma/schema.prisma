@@ -1,0 +1,365 @@
+// Portfolio - Full schema
+// Phase 2: Users, Posts, Tags, Comments, Discussions, Dashboards, Files, Topics, PageViews
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum UserRole {
+  ADMIN
+  AUTHOR
+  MEMBER
+}
+
+enum PostType {
+  ANALYSIS
+  CASE_STUDY
+  NOTE
+  NEWS
+  OTHER
+}
+
+enum PostStatus {
+  DRAFT
+  PENDING_APPROVAL
+  PUBLISHED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// =============================================================================
+// User & Auth
+// =============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  name          String?
+  role          UserRole  @default(MEMBER)
+  bio           String?   @db.Text
+  avatarUrl     String?   @map("avatar_url")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  posts           Post[]
+  comments        Comment[]
+  discussionReplies DiscussionReply[]
+  discussions     Discussion[]
+  files           File[]
+  dashboards      Dashboard[]
+  commentUpvotes  CommentUpvote[]
+  bookmarks       Bookmark[]
+
+  @@map("users")
+}
+
+// =============================================================================
+// Posts & Tags
+// =============================================================================
+
+model Post {
+  id            String      @id @default(cuid())
+  authorId      String      @map("author_id")
+  title         String
+  slug          String      @unique
+  subtitle      String?     @db.Text
+  content       String      @db.Text
+  coverImageUrl String?     @map("cover_image_url")
+  type          PostType    @default(OTHER)
+  status        PostStatus  @default(DRAFT)
+  publishedAt   DateTime?   @map("published_at")
+  readingTimeMinutes Int?    @map("reading_time_minutes")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  postTags       PostTag[]
+  comments      Comment[]
+  files         File[]
+  topicPosts    TopicPost[]
+  bookmarks     Bookmark[]
+
+  @@index([authorId])
+  @@index([status, publishedAt])
+  @@index([type])
+  @@map("posts")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  postTags      PostTag[]
+  discussionTags DiscussionTag[]
+
+  @@map("tags")
+}
+
+model PostTag {
+  postId String @map("post_id")
+  tagId  String @map("tag_id")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@index([tagId])
+  @@map("post_tags")
+}
+
+// =============================================================================
+// Comments (under posts, threaded)
+// =============================================================================
+
+model Comment {
+  id              String    @id @default(cuid())
+  postId          String    @map("post_id")
+  userId          String    @map("user_id")
+  parentCommentId String?   @map("parent_comment_id")
+  content         String    @db.Text
+  isHidden        Boolean   @default(false) @map("is_hidden")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent    Comment? @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies   Comment[] @relation("CommentReplies")
+  upvotes   CommentUpvote[]
+
+  @@index([postId])
+  @@index([userId])
+  @@index([parentCommentId])
+  @@map("comments")
+}
+
+model CommentUpvote {
+  commentId String @map("comment_id")
+  userId    String @map("user_id")
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId])
+  @@map("comment_upvotes")
+}
+
+// =============================================================================
+// Discussions (forum threads)
+// =============================================================================
+
+model Discussion {
+  id             String         @id @default(cuid())
+  authorId       String         @map("author_id")
+  title          String
+  slug           String         @unique
+  content        String         @db.Text
+  approvalStatus ApprovalStatus @default(PENDING) @map("approval_status")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  author    User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies         DiscussionReply[]
+  tags            DiscussionTag[]
+  files           File[]
+  topicDiscussions TopicDiscussion[]
+
+  @@index([authorId])
+  @@map("discussions")
+}
+
+model DiscussionReply {
+  id              String   @id @default(cuid())
+  discussionId    String   @map("discussion_id")
+  userId          String   @map("user_id")
+  parentReplyId   String?  @map("parent_reply_id")
+  content         String   @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  discussion  Discussion       @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent      DiscussionReply? @relation("ReplyReplies", fields: [parentReplyId], references: [id], onDelete: Cascade)
+  replies     DiscussionReply[] @relation("ReplyReplies")
+
+  @@index([discussionId])
+  @@index([userId])
+  @@index([parentReplyId])
+  @@map("discussion_replies")
+}
+
+model DiscussionTag {
+  discussionId String @map("discussion_id")
+  tagId        String @map("tag_id")
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  tag        Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([discussionId, tagId])
+  @@index([tagId])
+  @@map("discussion_tags")
+}
+
+// =============================================================================
+// Files & Attachments
+// =============================================================================
+
+model File {
+  id             String         @id @default(cuid())
+  uploaderId     String         @map("uploader_id")
+  fileName       String         @map("file_name")
+  filePath       String         @map("file_path")
+  mimeType       String         @map("mime_type")
+  sizeBytes      Int            @map("size_bytes")
+  approvalStatus ApprovalStatus @default(PENDING) @map("approval_status")
+  postId         String?        @map("post_id")
+  discussionId   String?        @map("discussion_id")
+  dashboardId    String?        @map("dashboard_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  uploader   User        @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  post       Post?       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  discussion Discussion? @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  dashboard  Dashboard?  @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@index([uploaderId])
+  @@index([postId])
+  @@index([discussionId])
+  @@index([dashboardId])
+  @@map("files")
+}
+
+// =============================================================================
+// Dashboards & Analytics
+// =============================================================================
+
+model Dashboard {
+  id             String         @id @default(cuid())
+  authorId       String         @map("author_id")
+  title          String
+  slug           String         @unique
+  description    String?        @db.Text
+  configJson     Json?          @map("config_json")
+  approvalStatus ApprovalStatus @default(PENDING) @map("approval_status")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  author          User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  files           File[]
+  topicDashboards TopicDashboard[]
+
+  @@index([authorId])
+  @@map("dashboards")
+}
+
+// =============================================================================
+// Topics (aggregate posts, dashboards, discussions)
+// =============================================================================
+
+model Topic {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  postLinks       TopicPost[]
+  dashboardLinks  TopicDashboard[]
+  discussionLinks TopicDiscussion[]
+
+  @@map("topics")
+}
+
+model TopicPost {
+  topicId String @map("topic_id")
+  postId  String @map("post_id")
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  post  Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([topicId, postId])
+  @@index([postId])
+  @@map("topic_posts")
+}
+
+model TopicDashboard {
+  topicId     String @map("topic_id")
+  dashboardId String @map("dashboard_id")
+
+  topic     Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@id([topicId, dashboardId])
+  @@index([dashboardId])
+  @@map("topic_dashboards")
+}
+
+model TopicDiscussion {
+  topicId      String @map("topic_id")
+  discussionId String @map("discussion_id")
+
+  topic      Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+
+  @@id([topicId, discussionId])
+  @@index([discussionId])
+  @@map("topic_discussions")
+}
+
+// =============================================================================
+// Analytics / Page Views
+// =============================================================================
+
+enum PageViewEntityType {
+  POST
+  DASHBOARD
+  OTHER
+}
+
+model PageView {
+  id         String   @id @default(cuid())
+  entityType PageViewEntityType @map("entity_type")
+  entityId   String   @map("entity_id")
+  viewedAt   DateTime @default(now()) @map("viewed_at")
+  viewerIp   String?  @map("viewer_ip")
+
+  @@index([entityType, entityId])
+  @@index([viewedAt])
+  @@map("page_views")
+}
+
+// =============================================================================
+// Bookmarks (user saved content)
+// =============================================================================
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  postId    String   @map("post_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId])
+  @@index([postId])
+  @@map("bookmarks")
+}
