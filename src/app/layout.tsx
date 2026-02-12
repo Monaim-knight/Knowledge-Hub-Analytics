@@ -5,8 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 
 export const metadata: Metadata = {
-  title: "Islam Md Monaim | Knowledge Hub & Analytics",
-  description: "Personal knowledge hub, analytics, and community platform by Islam Md Monaim.",
+  title: "Islam Md Monaim | Facts & Data",
+  description: "Personal facts, data, and community platform by Islam Md Monaim.",
 };
 
 export default function RootLayout({

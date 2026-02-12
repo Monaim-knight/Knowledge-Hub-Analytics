@@ -1,4 +1,4 @@
-# Portfolio — Knowledge Hub & Analytics Platform
+# Islam Md Monaim — Facts & Data Platform
 
 A full-stack platform combining publishing, data dashboards, community discussions, and structured learning.
 

@@ -5,7 +5,7 @@ export default function HomePage() {
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16">
       <section className="text-center">
         <h1 className="text-4xl font-bold tracking-tight text-slate-100 sm:text-5xl md:text-6xl">
-          Knowledge Hub & <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-400">Analytics</span>
+          Facts & <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-400">Data</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
           A platform combining publishing, data dashboards, community discussions,
