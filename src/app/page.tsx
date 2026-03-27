@@ -1,76 +1,157 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { Hero } from "@/components/Hero";
+import { Layout } from "@/components/Layout";
+import { SectionHeader } from "@/components/SectionHeader";
+import { MetricCard } from "@/components/MetricCard";
+import { CaseStudyCard } from "@/components/CaseStudyCard";
+import { ProjectCard } from "@/components/ProjectCard";
+import { brand, caseStudies, metrics, projects } from "@/lib/portfolio-data";
+
+export const metadata: Metadata = {
+  title: "Professional Portfolio",
+  description:
+    "Turning data into strategy through analytics, dashboards, and business intelligence.",
+};
 
 export default function HomePage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16">
-      <section className="text-center">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-100 sm:text-5xl md:text-6xl">
-          Facts & <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-400">Data</span>
-        </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400">
-          A platform combining publishing, data dashboards, community discussions,
-          and structured learning—all in one place.
-        </p>
-        <div className="mt-10 flex items-center justify-center gap-4">
-          <Link
-            href="/posts"
-            className="rounded-lg bg-cyan-500 px-6 py-3 text-sm font-medium text-slate-900 hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20"
-          >
-            Browse Posts
-          </Link>
-          <Link
-            href="/dashboards"
-            className="rounded-lg border-2 border-violet-500/50 px-6 py-3 text-sm font-medium text-slate-100 hover:border-violet-400 hover:bg-violet-500/10 transition-colors"
-          >
-            View Dashboards
-          </Link>
-        </div>
+    <div>
+      <Hero />
+
+      <section className="py-14 sm:py-16">
+        <Layout>
+          <SectionHeader
+            eyebrow="Impact"
+            title="Analytics outcomes you can measure"
+            description="A pragmatic blend of KPI design, clean data modeling, and stakeholder-ready dashboards."
+          />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {metrics.map((m, idx) => (
+              <MetricCard key={m.label} metric={m} index={idx} />
+            ))}
+          </div>
+        </Layout>
       </section>
 
-      <section className="mt-24 grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
-        <FeatureCard
-          title="Posts & Essays"
-          description="Blog posts, case studies, analyses, and long-form notes."
-          href="/posts"
-        />
-        <FeatureCard
-          title="Dashboards"
-          description="Interactive data visualizations and analytical projects."
-          href="/dashboards"
-        />
-        <FeatureCard
-          title="Discussions"
-          description="Community threads, comments, and collaborative dialogue."
-          href="/discussions"
-        />
-        <FeatureCard
-          title="Topics"
-          description="Browse by topic—inequality, policy, ML, and more."
-          href="/topics"
-        />
+      <section className="py-8 sm:py-10">
+        <Layout>
+          <div className="flex items-end justify-between gap-6">
+            <SectionHeader
+              eyebrow="Case Studies"
+              title="Selected engagements"
+              description="Problem-first work with clear architecture, measurable results, and reusable insights."
+            />
+            <Link
+              href="/case-studies"
+              className="hidden rounded-xl border border-slate-800/80 bg-slate-950/20 px-4 py-2 text-sm font-medium text-slate-100 hover:bg-slate-900/40 hover:border-indigo-500/40 transition-colors sm:inline-flex"
+            >
+              View all
+            </Link>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-3">
+            {caseStudies.slice(0, 3).map((cs, idx) => (
+              <CaseStudyCard
+                key={cs.slug}
+                item={{ slug: cs.slug, title: cs.title, summary: cs.summary }}
+                index={idx}
+              />
+            ))}
+          </div>
+        </Layout>
+      </section>
+
+      <section className="py-14 sm:py-16">
+        <Layout>
+          <SectionHeader
+            eyebrow="Projects"
+            title="Technical work"
+            description="A sample of tools, workbooks, dashboards, and automation scripts."
+          />
+          <div className="grid gap-5 lg:grid-cols-3">
+            {projects.slice(0, 3).map((p, idx) => (
+              <ProjectCard key={p.title} item={p} index={idx} />
+            ))}
+          </div>
+        </Layout>
+      </section>
+
+      <section className="py-14 sm:py-16">
+        <Layout>
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
+            <div className="lg:col-span-7">
+              <SectionHeader
+                eyebrow="About"
+                title="Analytical, structured, impact-driven"
+                description="I build data systems that make decisions easier: clear KPI definitions, reliable models, and dashboards that support action—not just reporting."
+              />
+              <p className="text-sm leading-relaxed text-slate-300/90">
+                My work sits at the intersection of strategy and engineering:
+                turning messy data into coherent metrics, dashboards, and
+                automation that teams can trust. I focus on governance, clarity,
+                and repeatable workflows.
+              </p>
+              <div className="mt-6">
+                <Link
+                  href="/about"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-indigo-200 hover:text-indigo-100 transition-colors"
+                >
+                  Read More <span aria-hidden>→</span>
+                </Link>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5">
+              <div className="rounded-2xl border border-slate-800/70 bg-slate-900/30 p-6 backdrop-blur">
+                <p className="text-sm font-semibold text-slate-50">
+                  Focus areas
+                </p>
+                <ul className="mt-4 space-y-2 text-sm text-slate-300/90">
+                  <li>• KPI frameworks & metric governance</li>
+                  <li>• Executive dashboards & decision cadence</li>
+                  <li>• Enterprise modeling & analytics engineering</li>
+                  <li>• Automation for repeatable reporting workflows</li>
+                </ul>
+                <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-950/20 p-4 text-sm text-slate-300/90">
+                  <p className="font-medium text-slate-100">Mission</p>
+                  <p className="mt-2">
+                    Build data systems that drive business impact.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Layout>
+      </section>
+
+      <section className="py-14 sm:py-16">
+        <Layout>
+          <div className="rounded-3xl border border-slate-800/70 bg-gradient-to-r from-indigo-500/10 via-slate-900/30 to-slate-900/20 p-8 backdrop-blur sm:p-10">
+            <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-medium text-indigo-200/90">
+                  Let’s work together
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-50">
+                  Ready to turn analytics into outcomes?
+                </h2>
+                <p className="mt-3 text-sm text-slate-300/90">
+                  KPI design, dashboards, automation, and analytics engineering —
+                  delivered with clarity and rigor.
+                </p>
+              </div>
+
+              <Link
+                href="/contact"
+                className="rounded-xl bg-indigo-500 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-400 transition-colors"
+              >
+                Contact {brand.name.split(" ")[0]}
+              </Link>
+            </div>
+          </div>
+        </Layout>
       </section>
     </div>
-  );
-}
-
-function FeatureCard({
-  title,
-  description,
-  href,
-}: {
-  title: string;
-  description: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group rounded-xl border border-slate-700/50 bg-slate-800/50 p-6 transition-all hover:border-cyan-500/50 hover:bg-slate-800/80 hover:shadow-lg hover:shadow-cyan-500/5"
-    >
-      <h2 className="text-lg font-semibold text-slate-100 group-hover:text-cyan-400 transition-colors">
-        {title}
-      </h2>
-      <p className="mt-2 text-sm text-slate-400">{description}</p>
-    </Link>
   );
 }

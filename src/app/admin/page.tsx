@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { AdminAnalytics } from "@/components/admin/AdminAnalytics";
 import { ModerationQueue } from "@/components/admin/ModerationQueue";
+import Link from "next/link";
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
@@ -14,6 +15,26 @@ export default async function AdminPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16">
       <h1 className="text-3xl font-bold text-slate-100 mb-8">Admin</h1>
+      <div className="mb-8 flex flex-wrap gap-3">
+        <Link
+          href="/admin/case-studies/new"
+          className="inline-flex rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400"
+        >
+          Upload Case Study
+        </Link>
+        <Link
+          href="/admin/projects/new"
+          className="inline-flex rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400"
+        >
+          Upload Project
+        </Link>
+        <Link
+          href="/admin/blog/new"
+          className="inline-flex rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400"
+        >
+          Upload Blog Post
+        </Link>
+      </div>
 
       <section className="mb-16">
         <h2 className="text-2xl font-semibold text-slate-100 mb-4">Moderation queue</h2>
