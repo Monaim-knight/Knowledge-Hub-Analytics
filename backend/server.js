@@ -3,12 +3,14 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import path from "node:path";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import caseStudyRoutes from "./routes/caseStudyRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -24,6 +26,7 @@ app.use(
 );
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
+app.use("/uploads", express.static(path.resolve("uploads")));
 
 app.get("/api/health", (_req, res) => {
   res.json({ success: true, message: "Backend is running" });
@@ -34,6 +37,8 @@ app.use("/api/case-studies", caseStudyRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/upload", uploadRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

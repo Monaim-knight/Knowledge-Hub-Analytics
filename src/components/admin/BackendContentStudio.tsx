@@ -11,7 +11,22 @@ type Section = {
 const API_BASE = "/api/backend";
 const TOKEN_KEY = "portfolio_backend_admin_token";
 
+function getStoredToken(): string {
+  if (typeof window === "undefined") return "";
+  return (localStorage.getItem(TOKEN_KEY) || "").trim();
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 export function BackendContentStudio() {
+  const [mounted, setMounted] = useState(false);
   const [token, setToken] = useState<string>("");
   const [email, setEmail] = useState("admin@example.com");
   const [password, setPassword] = useState("change_me_123456");
@@ -22,6 +37,7 @@ export function BackendContentStudio() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [loginHint, setLoginHint] = useState("Not signed in");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Case study fields
   const [csTitle, setCsTitle] = useState("");
@@ -48,14 +64,19 @@ export function BackendContentStudio() {
   const [bContent, setBContent] = useState("");
 
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY) || "";
+    setMounted(true);
+    const storedToken = getStoredToken();
     setToken(storedToken);
     setLoginHint(storedToken ? "Signed in" : "Not signed in");
   }, []);
 
+  /** After mount, treat either React state or localStorage as signed in (avoids missing Logout when state lags). */
+  const isSignedIn =
+    mounted && Boolean((token || "").trim() || getStoredToken());
+
   const canSaveCaseStudy = useMemo(
     () =>
-      Boolean(token) &&
+      Boolean((token || "").trim() || getStoredToken()) &&
       csTitle.trim().length > 0 &&
       csDescription.trim().length > 0 &&
       csSections.every((s) => s.heading.trim() && s.text.trim()),
@@ -63,12 +84,18 @@ export function BackendContentStudio() {
   );
 
   const canSaveProject = useMemo(
-    () => Boolean(token) && pTitle.trim().length > 0 && pDescription.trim().length > 0,
+    () =>
+      Boolean((token || "").trim() || getStoredToken()) &&
+      pTitle.trim().length > 0 &&
+      pDescription.trim().length > 0,
     [pDescription, pTitle, token]
   );
 
   const canSaveBlog = useMemo(
-    () => Boolean(token) && bTitle.trim().length > 0 && bContent.trim().length > 0,
+    () =>
+      Boolean((token || "").trim() || getStoredToken()) &&
+      bTitle.trim().length > 0 &&
+      bContent.trim().length > 0,
     [bContent, bTitle, token]
   );
 
@@ -93,8 +120,9 @@ export function BackendContentStudio() {
       if (!res.ok || !data?.token) {
         throw new Error(data?.message || "Login failed");
       }
-      localStorage.setItem(TOKEN_KEY, data.token);
-      setToken(data.token);
+      const cleanToken = String(data.token).trim();
+      localStorage.setItem(TOKEN_KEY, cleanToken);
+      setToken(cleanToken);
       setLoginHint("Signed in");
       setMessage("Backend login successful. You can now upload content.");
     } catch (err) {
@@ -143,16 +171,27 @@ export function BackendContentStudio() {
           image: s.image.trim(),
         })),
       };
+      const authToken = getStoredToken() || token.trim();
+      if (!authToken) {
+        throw new Error("Not signed in — use Backend Login above.");
+      }
       const res = await fetch(`${API_BASE}/case-studies`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Case study upload failed");
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          setToken("");
+          setLoginHint("Not signed in");
+        }
+        throw new Error(data?.message || "Case study upload failed");
+      }
       setMessage(`Case study uploaded: ${data?.data?.slug || "created"}`);
       setCsTitle("");
       setCsDescription("");
@@ -163,6 +202,48 @@ export function BackendContentStudio() {
       setError(err instanceof Error ? err.message : "Case study upload failed");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSingleImageSelect(
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (value: string) => void
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingImage(true);
+    setError("");
+    setMessage("");
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setter(dataUrl);
+      setMessage(`${file.name} selected. It will upload on save.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image selection failed");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleMultipleImageSelect(
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (values: string[]) => void
+  ) {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setUploadingImage(true);
+    setError("");
+    setMessage("");
+    try {
+      const converted = await Promise.all(files.map((file) => readFileAsDataUrl(file)));
+      setter(converted);
+      setMessage(`${files.length} image(s) selected. They will upload on save.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image selection failed");
+    } finally {
+      setUploadingImage(false);
+      e.target.value = "";
     }
   }
 
@@ -182,16 +263,27 @@ export function BackendContentStudio() {
         liveDemo: pLiveDemo.trim(),
         images: pImages.split(",").map((img) => img.trim()).filter(Boolean),
       };
+      const authToken = getStoredToken() || token.trim();
+      if (!authToken) {
+        throw new Error("Not signed in — use Backend Login above.");
+      }
       const res = await fetch(`${API_BASE}/projects`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Project upload failed");
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          setToken("");
+          setLoginHint("Not signed in");
+        }
+        throw new Error(data?.message || "Project upload failed");
+      }
       setMessage(`Project uploaded: ${data?.data?.slug || "created"}`);
       setPTitle("");
       setPDescription("");
@@ -220,16 +312,27 @@ export function BackendContentStudio() {
         content: bContent.trim(),
         tags: bTags.split(",").map((t) => t.trim()).filter(Boolean),
       };
+      const authToken = getStoredToken() || token.trim();
+      if (!authToken) {
+        throw new Error("Not signed in — use Backend Login above.");
+      }
       const res = await fetch(`${API_BASE}/blog`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.message || "Blog upload failed");
+      if (!res.ok) {
+        if (res.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          setToken("");
+          setLoginHint("Not signed in");
+        }
+        throw new Error(data?.message || "Blog upload failed");
+      }
       setMessage(`Blog post uploaded: ${data?.data?.slug || "created"}`);
       setBTitle("");
       setBCoverImage("");
@@ -254,7 +357,7 @@ export function BackendContentStudio() {
           <span className="text-slate-200">{loginHint}</span>
         </p>
 
-        {!token ? (
+        {!isSignedIn ? (
           <form onSubmit={handleBackendLogin} className="mt-5 grid gap-4 sm:grid-cols-2">
             <input
               className="rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
@@ -281,16 +384,31 @@ export function BackendContentStudio() {
             </button>
           </form>
         ) : (
-          <div className="mt-4 flex items-center gap-3">
-            <span className="text-sm text-emerald-300">Connected to backend.</span>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-emerald-300">
+              Connected to backend — you can upload content below.
+            </p>
             <button
+              type="button"
               onClick={handleLogout}
-              className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-900/50"
+              className="shrink-0 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-200 hover:bg-red-500/20"
             >
-              Logout
+              Sign out
             </button>
           </div>
         )}
+
+        <p className="mt-4 text-xs text-slate-500">
+          Stuck or bad token?{" "}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="font-medium text-indigo-300 underline decoration-indigo-500/40 underline-offset-2 hover:text-indigo-200"
+          >
+            Clear saved backend session
+          </button>{" "}
+          (same as sign out — removes the token from this browser).
+        </p>
 
         {error ? (
           <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -367,6 +485,17 @@ export function BackendContentStudio() {
               value={csHeroImage}
               onChange={(e) => setCsHeroImage(e.target.value)}
             />
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-3">
+              <label className="mb-2 block text-xs text-slate-300">
+                or select hero image from your computer
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleSingleImageSelect(e, setCsHeroImage)}
+                className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
+              />
+            </div>
 
             <div className="space-y-3 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
               <div className="flex items-center justify-between">
@@ -402,6 +531,26 @@ export function BackendContentStudio() {
                     value={s.image}
                     onChange={(e) => updateCaseSection(idx, { image: e.target.value })}
                   />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingImage(true);
+                      try {
+                        const dataUrl = await readFileAsDataUrl(file);
+                        updateCaseSection(idx, { image: dataUrl });
+                        setMessage(`${file.name} selected for section image.`);
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : "Section image selection failed");
+                      } finally {
+                        setUploadingImage(false);
+                        e.target.value = "";
+                      }
+                    }}
+                    className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
+                  />
                   {csSections.length > 1 ? (
                     <button
                       type="button"
@@ -419,7 +568,7 @@ export function BackendContentStudio() {
               disabled={!canSaveCaseStudy || saving}
               className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Upload case study"}
+              {saving ? "Saving..." : uploadingImage ? "Preparing images..." : "Upload case study"}
             </button>
           </form>
         ) : null}
@@ -453,6 +602,17 @@ export function BackendContentStudio() {
               value={pThumbnail}
               onChange={(e) => setPThumbnail(e.target.value)}
             />
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-3">
+              <label className="mb-2 block text-xs text-slate-300">
+                or select thumbnail from your computer
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleSingleImageSelect(e, setPThumbnail)}
+                className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
+              />
+            </div>
             <input
               className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
               placeholder="GitHub URL (optional)"
@@ -471,11 +631,25 @@ export function BackendContentStudio() {
               value={pImages}
               onChange={(e) => setPImages(e.target.value)}
             />
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-3">
+              <label className="mb-2 block text-xs text-slate-300">
+                or select additional images from your computer
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) =>
+                  handleMultipleImageSelect(e, (values) => setPImages(values.join(",")))
+                }
+                className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
+              />
+            </div>
             <button
               disabled={!canSaveProject || saving}
               className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Upload project"}
+              {saving ? "Saving..." : uploadingImage ? "Preparing images..." : "Upload project"}
             </button>
           </form>
         ) : null}
@@ -495,6 +669,17 @@ export function BackendContentStudio() {
               value={bCoverImage}
               onChange={(e) => setBCoverImage(e.target.value)}
             />
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-3">
+              <label className="mb-2 block text-xs text-slate-300">
+                or select cover image from your computer
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleSingleImageSelect(e, setBCoverImage)}
+                className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
+              />
+            </div>
             <input
               className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
               placeholder="Tags (comma separated)"
@@ -513,7 +698,7 @@ export function BackendContentStudio() {
               disabled={!canSaveBlog || saving}
               className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
             >
-              {saving ? "Saving..." : "Upload blog post"}
+              {saving ? "Saving..." : uploadingImage ? "Preparing images..." : "Upload blog post"}
             </button>
           </form>
         ) : null}

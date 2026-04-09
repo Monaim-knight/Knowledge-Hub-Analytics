@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { CaseStudy } from "@/lib/portfolio-data";
-
 export function CaseStudyCard({
   item,
   index,
 }: {
-  item: Pick<CaseStudy, "slug" | "title" | "summary">;
+  item: { slug: string; title: string; summary: string };
   index: number;
 }) {
   return (

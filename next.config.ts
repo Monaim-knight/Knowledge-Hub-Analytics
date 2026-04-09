@@ -1,8 +1,15 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+/**
+ * Note: Next.js requires `distDir` to be a relative path.
+ * Keep configurable, but default to `.next`.
+ */
+const distDir = process.env.NEXT_DIST_DIR || ".next";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  distDir,
   outputFileTracingRoot: path.join(process.cwd()),
   async headers() {
     return [
@@ -22,7 +29,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
+              "img-src 'self' data: blob: https: http:",
               "font-src 'self'",
               "connect-src 'self'",
               "frame-ancestors 'none'",

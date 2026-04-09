@@ -6,6 +6,8 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { MetricCard } from "@/components/MetricCard";
 import { CaseStudyCard } from "@/components/CaseStudyCard";
 import { ProjectCard } from "@/components/ProjectCard";
+import { fetchCaseStudies } from "@/lib/case-studies-api";
+import { fetchProjects } from "@/lib/projects-api";
 import { brand, caseStudies, metrics, projects } from "@/lib/portfolio-data";
 
 export const metadata: Metadata = {
@@ -14,7 +16,41 @@ export const metadata: Metadata = {
     "Turning data into strategy through analytics, dashboards, and business intelligence.",
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const apiStudies = await fetchCaseStudies();
+  const featuredCaseStudies =
+    apiStudies.length > 0
+      ? apiStudies.slice(0, 3).map((cs) => ({
+          slug: cs.slug,
+          title: cs.title,
+          summary: cs.description,
+        }))
+      : caseStudies.slice(0, 3).map((cs) => ({
+          slug: cs.slug,
+          title: cs.title,
+          summary: cs.summary,
+        }));
+
+  const apiProjects = await fetchProjects();
+  const featuredProjects =
+    apiProjects.length > 0
+      ? apiProjects.slice(0, 3).map((p) => ({
+          key: p.slug,
+          title: p.title,
+          description: p.description,
+          tags: p.tags ?? [],
+          githubUrl: p.github || undefined,
+          liveDemoUrl: p.liveDemo || undefined,
+        }))
+      : projects.slice(0, 3).map((p) => ({
+          key: p.title,
+          title: p.title,
+          description: p.description,
+          tags: p.tags,
+          githubUrl: p.githubUrl,
+          liveDemoUrl: undefined,
+        }));
+
   return (
     <div>
       <Hero />
@@ -51,7 +87,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-5 lg:grid-cols-3">
-            {caseStudies.slice(0, 3).map((cs, idx) => (
+            {featuredCaseStudies.map((cs, idx) => (
               <CaseStudyCard
                 key={cs.slug}
                 item={{ slug: cs.slug, title: cs.title, summary: cs.summary }}
@@ -70,8 +106,18 @@ export default function HomePage() {
             description="A sample of tools, workbooks, dashboards, and automation scripts."
           />
           <div className="grid gap-5 lg:grid-cols-3">
-            {projects.slice(0, 3).map((p, idx) => (
-              <ProjectCard key={p.title} item={p} index={idx} />
+            {featuredProjects.map((p, idx) => (
+              <ProjectCard
+                key={p.key}
+                item={{
+                  title: p.title,
+                  description: p.description,
+                  tags: p.tags,
+                  githubUrl: p.githubUrl,
+                  liveDemoUrl: p.liveDemoUrl,
+                }}
+                index={idx}
+              />
             ))}
           </div>
         </Layout>

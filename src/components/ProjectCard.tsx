@@ -2,9 +2,21 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { Project } from "@/lib/portfolio-data";
+export type ProjectCardItem = {
+  title: string;
+  description: string;
+  tags: string[];
+  githubUrl?: string;
+  liveDemoUrl?: string;
+};
 
-export function ProjectCard({ item, index }: { item: Project; index: number }) {
+export function ProjectCard({
+  item,
+  index,
+}: {
+  item: ProjectCardItem;
+  index: number;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -32,16 +44,28 @@ export function ProjectCard({ item, index }: { item: Project; index: number }) {
             ))}
           </div>
         </div>
-        {item.githubUrl ? (
-          <div className="mt-5">
-            <Link
-              href={item.githubUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-indigo-200 hover:text-indigo-100 transition-colors"
-            >
-              GitHub <span aria-hidden>↗</span>
-            </Link>
+        {(item.githubUrl || item.liveDemoUrl) ? (
+          <div className="mt-5 flex flex-wrap gap-4">
+            {item.githubUrl ? (
+              <Link
+                href={item.githubUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-indigo-200 hover:text-indigo-100 transition-colors"
+              >
+                GitHub <span aria-hidden>↗</span>
+              </Link>
+            ) : null}
+            {item.liveDemoUrl ? (
+              <Link
+                href={item.liveDemoUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-indigo-200 hover:text-indigo-100 transition-colors"
+              >
+                Live demo <span aria-hidden>↗</span>
+              </Link>
+            ) : null}
           </div>
         ) : null}
       </div>

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getBackendApiBase } from "@/lib/backend-api-base";
 
-const BACKEND_BASE =
-  process.env.BACKEND_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "http://localhost:5000/api";
+const BACKEND_BASE = getBackendApiBase();
 
 async function proxy(req: NextRequest, method: string, path: string[]) {
   const targetUrl = new URL(`${BACKEND_BASE}/${path.join("/")}`);
@@ -13,9 +11,12 @@ async function proxy(req: NextRequest, method: string, path: string[]) {
 
   const headers = new Headers();
   const contentType = req.headers.get("content-type");
-  const authorization = req.headers.get("authorization");
+  const authorization =
+    req.headers.get("authorization") ?? req.headers.get("Authorization");
+  const cookie = req.headers.get("cookie");
   if (contentType) headers.set("content-type", contentType);
   if (authorization) headers.set("authorization", authorization);
+  if (cookie) headers.set("cookie", cookie);
 
   let body: string | undefined;
   if (!["GET", "HEAD"].includes(method)) {
@@ -31,6 +32,8 @@ async function proxy(req: NextRequest, method: string, path: string[]) {
     });
 
     const text = await res.text();
+    // Do not forward Set-Cookie here — Next.js App Router can throw / 500 when appending
+    // `set-cookie` on NextResponse. Studio uses the JSON `token` + Bearer, not cookies.
     return new NextResponse(text, {
       status: res.status,
       headers: {
