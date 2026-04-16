@@ -100,7 +100,7 @@ export function AdminAnalytics() {
                   backgroundColor: "#27272a",
                   border: "1px solid #3f3f46",
                 }}
-                formatter={(value: number | undefined) => [value ?? 0, "Views"]}
+                formatter={(value) => [Number(value ?? 0), "Views"]}
               />
               <Bar dataKey="views" fill="#71717a" radius={[0, 4, 4, 0]} />
             </BarChart>
@@ -142,7 +142,7 @@ export function AdminAnalytics() {
                   backgroundColor: "#27272a",
                   border: "1px solid #3f3f46",
                 }}
-                formatter={(value: number | undefined) => [value ?? 0, "Comments"]}
+                formatter={(value) => [Number(value ?? 0), "Comments"]}
               />
               <Bar dataKey="comments" fill="#71717a" radius={[0, 4, 4, 0]} />
             </BarChart>
