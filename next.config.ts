@@ -7,10 +7,38 @@ import path from "path";
  */
 const distDir = process.env.NEXT_DIST_DIR || ".next";
 
+function getBackendImageRemotePattern():
+  | { protocol: "http" | "https"; hostname: string; port?: string }
+  | null {
+  const raw = process.env.BACKEND_PUBLIC_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    const protocol = parsed.protocol.replace(":", "");
+    if (protocol !== "http" && protocol !== "https") return null;
+    return {
+      protocol,
+      hostname: parsed.hostname,
+      port: parsed.port || undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+const backendPattern = getBackendImageRemotePattern();
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   distDir,
   outputFileTracingRoot: path.join(process.cwd()),
+  images: {
+    remotePatterns: [
+      ...(backendPattern ? [backendPattern] : []),
+      { protocol: "http", hostname: "localhost" },
+      { protocol: "http", hostname: "127.0.0.1" },
+    ],
+  },
   async headers() {
     return [
       {
