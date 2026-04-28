@@ -11,6 +11,7 @@ type Section = {
 type MediaItem = {
   _id: string;
   url: string;
+  fileName?: string;
   originalName?: string;
   mimeType?: string;
   size?: number;
