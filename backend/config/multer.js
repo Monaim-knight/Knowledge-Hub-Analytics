@@ -39,7 +39,7 @@ const allowedMimes = new Set([
   "image/webp",
 ]);
 
-function fileFilter(_req, file, cb) {
+function imageFileFilter(_req, file, cb) {
   if (!allowedMimes.has(file.mimetype)) {
     const err = new Error("Only jpg, jpeg, png, and webp files are allowed");
     err.statusCode = 400;
@@ -50,10 +50,18 @@ function fileFilter(_req, file, cb) {
 
 export const uploadSingleImage = multer({
   storage,
-  fileFilter,
+  fileFilter: imageFileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024,
     files: 1,
   },
 }).single("image");
+
+export const uploadSingleFile = multer({
+  storage,
+  limits: {
+    fileSize: 20 * 1024 * 1024,
+    files: 1,
+  },
+}).single("file");
 

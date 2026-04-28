@@ -1,11 +1,30 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Section = {
   heading: string;
   text: string;
   image: string;
+};
+
+type MediaItem = {
+  _id: string;
+  url: string;
+  originalName?: string;
+  mimeType?: string;
+  size?: number;
+  createdAt?: string;
+};
+
+type DraftItem = {
+  _id: string;
+  title: string;
+  slug: string;
+  body: string;
+  status: "draft" | "published";
+  attachments: string[];
+  updatedAt?: string;
 };
 
 const API_BASE = "/api/backend";
@@ -32,7 +51,9 @@ export function BackendContentStudio() {
   const [password, setPassword] = useState("change_me_123456");
   const [authLoading, setAuthLoading] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<"case" | "project" | "blog">("case");
+  const [activeTab, setActiveTab] = useState<
+    "case" | "project" | "blog" | "files" | "write"
+  >("case");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -63,12 +84,32 @@ export function BackendContentStudio() {
   const [bTags, setBTags] = useState("");
   const [bContent, setBContent] = useState("");
 
+  // File library
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+
+  // Manual writing
+  const [drafts, setDrafts] = useState<DraftItem[]>([]);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
+  const [dId, setDId] = useState("");
+  const [dTitle, setDTitle] = useState("");
+  const [dSlug, setDSlug] = useState("");
+  const [dBody, setDBody] = useState("");
+  const [dStatus, setDStatus] = useState<"draft" | "published">("draft");
+  const [dAttachments, setDAttachments] = useState("");
+
   useEffect(() => {
     setMounted(true);
     const storedToken = getStoredToken();
     setToken(storedToken);
     setLoginHint(storedToken ? "Signed in" : "Not signed in");
   }, []);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    if (activeTab === "files") void loadMedia();
+    if (activeTab === "write") void loadDrafts();
+  }, [activeTab, isSignedIn, loadDrafts, loadMedia]);
 
   /** After mount, treat either React state or localStorage as signed in (avoids missing Logout when state lags). */
   const isSignedIn =
@@ -98,6 +139,29 @@ export function BackendContentStudio() {
       bContent.trim().length > 0,
     [bContent, bTitle, token]
   );
+
+  const canSaveDraft = useMemo(
+    () =>
+      Boolean((token || "").trim() || getStoredToken()) &&
+      dTitle.trim().length > 0 &&
+      dBody.trim().length > 0,
+    [dBody, dTitle, token]
+  );
+
+  const getAuthTokenOrThrow = useCallback(() => {
+    const authToken = getStoredToken() || token.trim();
+    if (!authToken) throw new Error("Not signed in — use Backend Login above.");
+    return authToken;
+  }, [token]);
+
+  async function safeJson(res: Response) {
+    const text = await res.text();
+    try {
+      return text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(text.slice(0, 180) || "Unexpected non-JSON response");
+    }
+  }
 
   async function handleBackendLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -141,6 +205,143 @@ export function BackendContentStudio() {
     setError("");
   }
 
+  const loadMedia = useCallback(async () => {
+    try {
+      const authToken = getAuthTokenOrThrow();
+      setLoadingMedia(true);
+      const res = await fetch(`${API_BASE}/upload`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = (await safeJson(res)) as { data?: MediaItem[]; message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to load files");
+      setMediaItems(Array.isArray(data.data) ? data.data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load files");
+    } finally {
+      setLoadingMedia(false);
+    }
+  }, [getAuthTokenOrThrow]);
+
+  async function uploadLibraryFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const authToken = getAuthTokenOrThrow();
+      setSaving(true);
+      setError("");
+      setMessage("");
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API_BASE}/upload/file`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${authToken}` },
+        body: form,
+      });
+      const data = (await safeJson(res)) as { fileUrl?: string; data?: MediaItem; message?: string };
+      if (!res.ok) throw new Error(data?.message || "File upload failed");
+      setMessage(`File uploaded: ${data.fileUrl || data?.data?.url || file.name}`);
+      await loadMedia();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "File upload failed");
+    } finally {
+      setSaving(false);
+      e.target.value = "";
+    }
+  }
+
+  const loadDrafts = useCallback(async () => {
+    try {
+      const authToken = getAuthTokenOrThrow();
+      setLoadingDrafts(true);
+      const res = await fetch(`${API_BASE}/content-drafts`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = (await safeJson(res)) as { data?: DraftItem[]; message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to load drafts");
+      setDrafts(Array.isArray(data.data) ? data.data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load drafts");
+    } finally {
+      setLoadingDrafts(false);
+    }
+  }, [getAuthTokenOrThrow]);
+
+  function clearDraftForm() {
+    setDId("");
+    setDTitle("");
+    setDSlug("");
+    setDBody("");
+    setDStatus("draft");
+    setDAttachments("");
+  }
+
+  function loadDraftIntoForm(d: DraftItem) {
+    setDId(d._id);
+    setDTitle(d.title || "");
+    setDSlug(d.slug || "");
+    setDBody(d.body || "");
+    setDStatus(d.status || "draft");
+    setDAttachments((d.attachments || []).join(", "));
+  }
+
+  async function saveDraft(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSaveDraft) return;
+    try {
+      const authToken = getAuthTokenOrThrow();
+      setSaving(true);
+      setError("");
+      setMessage("");
+      const payload = {
+        title: dTitle.trim(),
+        slug: dSlug.trim() || undefined,
+        body: dBody,
+        status: dStatus,
+        attachments: dAttachments
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+      };
+      const url = dId ? `${API_BASE}/content-drafts/${dId}` : `${API_BASE}/content-drafts`;
+      const method = dId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = (await safeJson(res)) as { data?: DraftItem; message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to save draft");
+      setMessage(dId ? "Content updated." : "Draft created.");
+      if (data.data) loadDraftIntoForm(data.data);
+      await loadDrafts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save draft");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteDraft(id: string) {
+    if (!confirm("Delete this draft?")) return;
+    try {
+      const authToken = getAuthTokenOrThrow();
+      const res = await fetch(`${API_BASE}/content-drafts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = (await safeJson(res)) as { message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to delete draft");
+      setMessage("Draft deleted.");
+      if (dId === id) clearDraftForm();
+      await loadDrafts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete draft");
+    }
+  }
+
   function updateCaseSection(idx: number, patch: Partial<Section>) {
     setCsSections((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
   }
@@ -171,10 +372,7 @@ export function BackendContentStudio() {
           image: s.image.trim(),
         })),
       };
-      const authToken = getStoredToken() || token.trim();
-      if (!authToken) {
-        throw new Error("Not signed in — use Backend Login above.");
-      }
+      const authToken = getAuthTokenOrThrow();
       const res = await fetch(`${API_BASE}/case-studies`, {
         method: "POST",
         headers: {
@@ -183,7 +381,7 @@ export function BackendContentStudio() {
         },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = (await safeJson(res)) as { data?: { slug?: string }; message?: string };
       if (!res.ok) {
         if (res.status === 401) {
           localStorage.removeItem(TOKEN_KEY);
@@ -263,10 +461,7 @@ export function BackendContentStudio() {
         liveDemo: pLiveDemo.trim(),
         images: pImages.split(",").map((img) => img.trim()).filter(Boolean),
       };
-      const authToken = getStoredToken() || token.trim();
-      if (!authToken) {
-        throw new Error("Not signed in — use Backend Login above.");
-      }
+      const authToken = getAuthTokenOrThrow();
       const res = await fetch(`${API_BASE}/projects`, {
         method: "POST",
         headers: {
@@ -275,7 +470,7 @@ export function BackendContentStudio() {
         },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = (await safeJson(res)) as { data?: { slug?: string }; message?: string };
       if (!res.ok) {
         if (res.status === 401) {
           localStorage.removeItem(TOKEN_KEY);
@@ -312,10 +507,7 @@ export function BackendContentStudio() {
         content: bContent.trim(),
         tags: bTags.split(",").map((t) => t.trim()).filter(Boolean),
       };
-      const authToken = getStoredToken() || token.trim();
-      if (!authToken) {
-        throw new Error("Not signed in — use Backend Login above.");
-      }
+      const authToken = getAuthTokenOrThrow();
       const res = await fetch(`${API_BASE}/blog`, {
         method: "POST",
         headers: {
@@ -324,7 +516,7 @@ export function BackendContentStudio() {
         },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = (await safeJson(res)) as { data?: { slug?: string }; message?: string };
       if (!res.ok) {
         if (res.status === 401) {
           localStorage.removeItem(TOKEN_KEY);
@@ -453,6 +645,26 @@ export function BackendContentStudio() {
             }`}
           >
             Blog Post
+          </button>
+          <button
+            onClick={() => setActiveTab("files")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              activeTab === "files"
+                ? "bg-indigo-500 text-white"
+                : "border border-slate-700 text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            Files
+          </button>
+          <button
+            onClick={() => setActiveTab("write")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              activeTab === "write"
+                ? "bg-indigo-500 text-white"
+                : "border border-slate-700 text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            Write
           </button>
         </div>
 
@@ -701,6 +913,162 @@ export function BackendContentStudio() {
               {saving ? "Saving..." : uploadingImage ? "Preparing images..." : "Upload blog post"}
             </button>
           </form>
+        ) : null}
+
+        {activeTab === "files" ? (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
+              <p className="text-sm text-slate-200">Upload any file</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Supported: images, PDFs, docs, and other common files up to 20MB.
+              </p>
+              <input
+                type="file"
+                onChange={uploadLibraryFile}
+                className="mt-3 block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
+              />
+              <button
+                type="button"
+                onClick={() => void loadMedia()}
+                className="mt-3 rounded-md border border-slate-700 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-900/40"
+              >
+                Refresh library
+              </button>
+            </div>
+
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
+              <p className="text-sm font-medium text-slate-100">File Library</p>
+              {loadingMedia ? (
+                <p className="mt-3 text-xs text-slate-400">Loading files...</p>
+              ) : mediaItems.length === 0 ? (
+                <p className="mt-3 text-xs text-slate-400">No files uploaded yet.</p>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {mediaItems.map((m) => (
+                    <div
+                      key={m._id}
+                      className="rounded-md border border-slate-800/70 bg-slate-900/40 p-3 text-xs text-slate-200"
+                    >
+                      <p className="font-medium text-slate-100">{m.originalName || m.fileName || "File"}</p>
+                      <p className="mt-1 break-all text-slate-400">{m.url}</p>
+                      <button
+                        type="button"
+                        onClick={() => navigator.clipboard.writeText(m.url)}
+                        className="mt-2 rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                      >
+                        Copy URL
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        {activeTab === "write" ? (
+          <div className="grid gap-5 lg:grid-cols-12">
+            <form onSubmit={saveDraft} className="space-y-4 lg:col-span-7">
+              <input
+                className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
+                placeholder="Content title"
+                value={dTitle}
+                onChange={(e) => setDTitle(e.target.value)}
+                required
+              />
+              <input
+                className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
+                placeholder="Slug (optional)"
+                value={dSlug}
+                onChange={(e) => setDSlug(e.target.value)}
+              />
+              <select
+                className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
+                value={dStatus}
+                onChange={(e) => setDStatus(e.target.value as "draft" | "published")}
+              >
+                <option value="draft">draft</option>
+                <option value="published">published</option>
+              </select>
+              <textarea
+                className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
+                placeholder="Write your markdown or plain text here..."
+                value={dBody}
+                onChange={(e) => setDBody(e.target.value)}
+                rows={12}
+                required
+              />
+              <input
+                className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
+                placeholder="Attachment URLs (comma separated)"
+                value={dAttachments}
+                onChange={(e) => setDAttachments(e.target.value)}
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  disabled={!canSaveDraft || saving}
+                  className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
+                >
+                  {saving ? "Saving..." : dId ? "Update content" : "Save draft"}
+                </button>
+                <button
+                  type="button"
+                  onClick={clearDraftForm}
+                  className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-900/40"
+                >
+                  New draft
+                </button>
+              </div>
+            </form>
+
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-4 lg:col-span-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-100">Saved drafts</p>
+                <button
+                  type="button"
+                  onClick={() => void loadDrafts()}
+                  className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                >
+                  Refresh
+                </button>
+              </div>
+              {loadingDrafts ? (
+                <p className="mt-3 text-xs text-slate-400">Loading drafts...</p>
+              ) : drafts.length === 0 ? (
+                <p className="mt-3 text-xs text-slate-400">No drafts yet.</p>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {drafts.map((d) => (
+                    <div
+                      key={d._id}
+                      className="rounded-md border border-slate-800/70 bg-slate-900/40 p-3 text-xs text-slate-200"
+                    >
+                      <p className="font-medium text-slate-100">{d.title}</p>
+                      <p className="mt-1 text-slate-400">
+                        /{d.slug} • {d.status}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => loadDraftIntoForm(d)}
+                          className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void deleteDraft(d._id)}
+                          className="rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200 hover:bg-red-500/20"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         ) : null}
       </section>
 

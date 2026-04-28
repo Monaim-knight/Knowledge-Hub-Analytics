@@ -1,13 +1,23 @@
 import express from "express";
-import { uploadSingleImage } from "../config/multer.js";
-import { uploadImage } from "../controllers/uploadController.js";
+import { uploadSingleFile, uploadSingleImage } from "../config/multer.js";
+import { listMedia, uploadFile, uploadImage } from "../controllers/uploadController.js";
+import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", (req, res, next) => {
+router.get("/", requireAuth, listMedia);
+
+router.post("/", requireAuth, (req, res, next) => {
   uploadSingleImage(req, res, (err) => {
     if (err) return next(err);
     return uploadImage(req, res, next);
+  });
+});
+
+router.post("/file", requireAuth, (req, res, next) => {
+  uploadSingleFile(req, res, (err) => {
+    if (err) return next(err);
+    return uploadFile(req, res, next);
   });
 });
 
