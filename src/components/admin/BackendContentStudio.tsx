@@ -105,12 +105,6 @@ export function BackendContentStudio() {
     setLoginHint(storedToken ? "Signed in" : "Not signed in");
   }, []);
 
-  useEffect(() => {
-    if (!isSignedIn) return;
-    if (activeTab === "files") void loadMedia();
-    if (activeTab === "write") void loadDrafts();
-  }, [activeTab, isSignedIn, loadDrafts, loadMedia]);
-
   /** After mount, treat either React state or localStorage as signed in (avoids missing Logout when state lags). */
   const isSignedIn =
     mounted && Boolean((token || "").trim() || getStoredToken());
@@ -265,6 +259,12 @@ export function BackendContentStudio() {
       setLoadingDrafts(false);
     }
   }, [getAuthTokenOrThrow]);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    if (activeTab === "files") void loadMedia();
+    if (activeTab === "write") void loadDrafts();
+  }, [activeTab, isSignedIn, loadDrafts, loadMedia]);
 
   function clearDraftForm() {
     setDId("");
