@@ -68,3 +68,27 @@ export async function deleteDraft(req, res, next) {
   }
 }
 
+export async function listPublishedDrafts(_req, res, next) {
+  try {
+    const data = await ContentDraft.find({ status: "published" })
+      .sort({ updatedAt: -1 })
+      .select("title slug updatedAt");
+    res.json({ success: true, data });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getPublishedDraftBySlug(req, res, next) {
+  try {
+    const item = await ContentDraft.findOne({
+      slug: req.params.slug,
+      status: "published",
+    });
+    if (!item) return res.status(404).json({ success: false, message: "Content not found" });
+    res.json({ success: true, data: item });
+  } catch (err) {
+    next(err);
+  }
+}
+

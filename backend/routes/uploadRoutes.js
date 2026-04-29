@@ -1,6 +1,6 @@
 import express from "express";
 import { uploadSingleFile, uploadSingleImage } from "../config/multer.js";
-import { listMedia, uploadFile, uploadImage } from "../controllers/uploadController.js";
+import { deleteMedia, listMedia, uploadFile, uploadImage } from "../controllers/uploadController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -20,6 +20,8 @@ router.post("/file", requireAuth, (req, res, next) => {
     return uploadFile(req, res, next);
   });
 });
+
+router.delete("/:id", requireAuth, deleteMedia);
 
 export default router;
 

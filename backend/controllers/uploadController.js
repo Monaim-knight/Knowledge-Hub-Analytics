@@ -1,4 +1,6 @@
 import Media from "../models/Media.js";
+import { unlink } from "node:fs/promises";
+import path from "node:path";
 
 function getPublicBaseUrl(req) {
   const fromEnv = process.env.BACKEND_PUBLIC_URL;
@@ -63,6 +65,27 @@ export async function listMedia(req, res, next) {
   try {
     const items = await Media.find().sort({ createdAt: -1 }).limit(200);
     return res.json({ success: true, data: items });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+export async function deleteMedia(req, res, next) {
+  try {
+    const item = await Media.findById(req.params.id);
+    if (!item) return res.status(404).json({ success: false, message: "File not found" });
+
+    if (item.fileName) {
+      const filePath = path.resolve("uploads", item.fileName);
+      try {
+        await unlink(filePath);
+      } catch {
+        // If file is already missing, still remove metadata record.
+      }
+    }
+
+    await Media.findByIdAndDelete(req.params.id);
+    return res.json({ success: true, message: "File deleted" });
   } catch (err) {
     return next(err);
   }

@@ -3,7 +3,9 @@ import { body, param } from "express-validator";
 import {
   createDraft,
   deleteDraft,
+  getPublishedDraftBySlug,
   listDrafts,
+  listPublishedDrafts,
   updateDraft,
 } from "../controllers/contentDraftController.js";
 import { requireAuth } from "../middleware/authMiddleware.js";
@@ -19,6 +21,8 @@ const validators = [
 ];
 
 router.get("/", requireAuth, listDrafts);
+router.get("/published", listPublishedDrafts);
+router.get("/published/:slug", getPublishedDraftBySlug);
 router.post("/", requireAuth, validators, createDraft);
 router.put("/:id", requireAuth, [param("id").isMongoId(), ...validators], updateDraft);
 router.delete("/:id", requireAuth, [param("id").isMongoId()], deleteDraft);

@@ -343,6 +343,23 @@ export function BackendContentStudio() {
     }
   }
 
+  async function deleteMedia(id: string) {
+    if (!confirm("Delete this file from library?")) return;
+    try {
+      const authToken = getAuthTokenOrThrow();
+      const res = await fetch(`${API_BASE}/upload/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = (await safeJson(res)) as { message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to delete file");
+      setMessage("File deleted.");
+      await loadMedia();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete file");
+    }
+  }
+
   function updateCaseSection(idx: number, patch: Partial<Section>) {
     setCsSections((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
   }
@@ -952,13 +969,37 @@ export function BackendContentStudio() {
                     >
                       <p className="font-medium text-slate-100">{m.originalName || m.fileName || "File"}</p>
                       <p className="mt-1 break-all text-slate-400">{m.url}</p>
-                      <button
-                        type="button"
-                        onClick={() => navigator.clipboard.writeText(m.url)}
-                        className="mt-2 rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
-                      >
-                        Copy URL
-                      </button>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(m.url)}
+                          className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                        >
+                          Copy URL
+                        </button>
+                        <a
+                          href={m.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                        >
+                          Open
+                        </a>
+                        <a
+                          href={m.url}
+                          download
+                          className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                        >
+                          Download
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => void deleteMedia(m._id)}
+                          className="rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200 hover:bg-red-500/20"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
