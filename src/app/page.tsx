@@ -7,6 +7,7 @@ import { MetricCard } from "@/components/MetricCard";
 import { CaseStudyCard } from "@/components/CaseStudyCard";
 import { ProjectCard } from "@/components/ProjectCard";
 import { fetchCaseStudies } from "@/lib/case-studies-api";
+import { fetchPublishedDrafts } from "@/lib/content-drafts-api";
 import { fetchProjects } from "@/lib/projects-api";
 import { brand, caseStudies, metrics, projects } from "@/lib/portfolio-data";
 
@@ -32,6 +33,7 @@ export default async function HomePage() {
         }));
 
   const apiProjects = await fetchProjects();
+  const publishedDrafts = await fetchPublishedDrafts();
   const featuredProjects =
     apiProjects.length > 0
       ? apiProjects.slice(0, 3).map((p) => ({
@@ -50,6 +52,8 @@ export default async function HomePage() {
           githubUrl: p.githubUrl,
           liveDemoUrl: undefined,
         }));
+
+  const featuredWriting = publishedDrafts.slice(0, 3);
 
   return (
     <div>
@@ -120,6 +124,45 @@ export default async function HomePage() {
               />
             ))}
           </div>
+        </Layout>
+      </section>
+
+      <section className="py-8 sm:py-10">
+        <Layout>
+          <div className="flex items-end justify-between gap-6">
+            <SectionHeader
+              eyebrow="Writing"
+              title="Published notes"
+              description="Selected long-form writing published from the Studio."
+            />
+            <Link
+              href="/writing"
+              className="hidden rounded-xl border border-slate-800/80 bg-slate-950/20 px-4 py-2 text-sm font-medium text-slate-100 hover:bg-slate-900/40 hover:border-indigo-500/40 transition-colors sm:inline-flex"
+            >
+              View all
+            </Link>
+          </div>
+
+          {featuredWriting.length === 0 ? (
+            <p className="text-sm text-slate-400">
+              No published writing yet. Publish from Studio → Write tab.
+            </p>
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-3">
+              {featuredWriting.map((post) => (
+                <Link
+                  key={post._id}
+                  href={`/writing/${post.slug}`}
+                  className="rounded-2xl border border-slate-800/70 bg-slate-900/30 p-6 backdrop-blur hover:border-indigo-500/40"
+                >
+                  <h3 className="text-base font-semibold tracking-tight text-slate-50">
+                    {post.title}
+                  </h3>
+                  <p className="mt-3 text-xs text-slate-400">/{post.slug}</p>
+                </Link>
+              ))}
+            </div>
+          )}
         </Layout>
       </section>
 
