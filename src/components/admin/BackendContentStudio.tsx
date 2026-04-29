@@ -28,6 +28,37 @@ type DraftItem = {
   updatedAt?: string;
 };
 
+type CaseStudyItem = {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  tags?: string[];
+  heroImage?: string;
+  sections?: Section[];
+};
+
+type ProjectItem = {
+  _id: string;
+  title: string;
+  slug: string;
+  description: string;
+  tags?: string[];
+  thumbnail?: string;
+  github?: string;
+  liveDemo?: string;
+  images?: string[];
+};
+
+type BlogItem = {
+  _id: string;
+  title: string;
+  slug: string;
+  coverImage?: string;
+  tags?: string[];
+  content: string;
+};
+
 const API_BASE = "/api/backend";
 const TOKEN_KEY = "portfolio_backend_admin_token";
 
@@ -63,6 +94,7 @@ export function BackendContentStudio() {
 
   // Case study fields
   const [csTitle, setCsTitle] = useState("");
+  const [csId, setCsId] = useState("");
   const [csDescription, setCsDescription] = useState("");
   const [csTags, setCsTags] = useState("");
   const [csHeroImage, setCsHeroImage] = useState("");
@@ -72,6 +104,7 @@ export function BackendContentStudio() {
 
   // Project fields
   const [pTitle, setPTitle] = useState("");
+  const [pId, setPId] = useState("");
   const [pDescription, setPDescription] = useState("");
   const [pTags, setPTags] = useState("");
   const [pThumbnail, setPThumbnail] = useState("");
@@ -81,6 +114,7 @@ export function BackendContentStudio() {
 
   // Blog fields
   const [bTitle, setBTitle] = useState("");
+  const [bId, setBId] = useState("");
   const [bCoverImage, setBCoverImage] = useState("");
   const [bTags, setBTags] = useState("");
   const [bContent, setBContent] = useState("");
@@ -88,6 +122,9 @@ export function BackendContentStudio() {
   // File library
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loadingMedia, setLoadingMedia] = useState(false);
+  const [caseStudies, setCaseStudies] = useState<CaseStudyItem[]>([]);
+  const [projectsList, setProjectsList] = useState<ProjectItem[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogItem[]>([]);
 
   // Manual writing
   const [drafts, setDrafts] = useState<DraftItem[]>([]);
@@ -134,6 +171,34 @@ export function BackendContentStudio() {
       bContent.trim().length > 0,
     [bContent, bTitle, token]
   );
+
+  function resetCaseForm() {
+    setCsId("");
+    setCsTitle("");
+    setCsDescription("");
+    setCsTags("");
+    setCsHeroImage("");
+    setCsSections([{ heading: "Problem", text: "", image: "" }]);
+  }
+
+  function resetProjectForm() {
+    setPId("");
+    setPTitle("");
+    setPDescription("");
+    setPTags("");
+    setPThumbnail("");
+    setPGithub("");
+    setPLiveDemo("");
+    setPImages("");
+  }
+
+  function resetBlogForm() {
+    setBId("");
+    setBTitle("");
+    setBCoverImage("");
+    setBTags("");
+    setBContent("");
+  }
 
   const canSaveDraft = useMemo(
     () =>
@@ -261,11 +326,47 @@ export function BackendContentStudio() {
     }
   }, [getAuthTokenOrThrow]);
 
+  const loadCaseStudies = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/case-studies`);
+      const data = (await safeJson(res)) as { data?: CaseStudyItem[]; message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to load case studies");
+      setCaseStudies(Array.isArray(data.data) ? data.data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load case studies");
+    }
+  }, []);
+
+  const loadProjects = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/projects`);
+      const data = (await safeJson(res)) as { data?: ProjectItem[]; message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to load projects");
+      setProjectsList(Array.isArray(data.data) ? data.data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load projects");
+    }
+  }, []);
+
+  const loadBlogPosts = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/blog`);
+      const data = (await safeJson(res)) as { data?: BlogItem[]; message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to load blog posts");
+      setBlogPosts(Array.isArray(data.data) ? data.data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load blog posts");
+    }
+  }, []);
+
   useEffect(() => {
     if (!isSignedIn) return;
     if (activeTab === "files") void loadMedia();
     if (activeTab === "write") void loadDrafts();
-  }, [activeTab, isSignedIn, loadDrafts, loadMedia]);
+    if (activeTab === "case") void loadCaseStudies();
+    if (activeTab === "project") void loadProjects();
+    if (activeTab === "blog") void loadBlogPosts();
+  }, [activeTab, isSignedIn, loadBlogPosts, loadCaseStudies, loadDrafts, loadMedia, loadProjects]);
 
   function clearDraftForm() {
     setDId("");
@@ -360,6 +461,96 @@ export function BackendContentStudio() {
     }
   }
 
+  function loadCaseStudyIntoForm(item: CaseStudyItem) {
+    setCsId(item._id);
+    setCsTitle(item.title || "");
+    setCsDescription(item.description || "");
+    setCsTags((item.tags || []).join(", "));
+    setCsHeroImage(item.heroImage || "");
+    setCsSections(
+      item.sections && item.sections.length > 0
+        ? item.sections.map((s) => ({
+            heading: s.heading || "",
+            text: s.text || "",
+            image: s.image || "",
+          }))
+        : [{ heading: "Problem", text: "", image: "" }]
+    );
+  }
+
+  async function deleteCaseStudy(id: string) {
+    if (!confirm("Delete this case study?")) return;
+    try {
+      const authToken = getAuthTokenOrThrow();
+      const res = await fetch(`${API_BASE}/case-studies/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = (await safeJson(res)) as { message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to delete case study");
+      if (csId === id) resetCaseForm();
+      setMessage("Case study deleted.");
+      await loadCaseStudies();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete case study");
+    }
+  }
+
+  function loadProjectIntoForm(item: ProjectItem) {
+    setPId(item._id);
+    setPTitle(item.title || "");
+    setPDescription(item.description || "");
+    setPTags((item.tags || []).join(", "));
+    setPThumbnail(item.thumbnail || "");
+    setPGithub(item.github || "");
+    setPLiveDemo(item.liveDemo || "");
+    setPImages((item.images || []).join(", "));
+  }
+
+  async function deleteProject(id: string) {
+    if (!confirm("Delete this project?")) return;
+    try {
+      const authToken = getAuthTokenOrThrow();
+      const res = await fetch(`${API_BASE}/projects/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = (await safeJson(res)) as { message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to delete project");
+      if (pId === id) resetProjectForm();
+      setMessage("Project deleted.");
+      await loadProjects();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete project");
+    }
+  }
+
+  function loadBlogIntoForm(item: BlogItem) {
+    setBId(item._id);
+    setBTitle(item.title || "");
+    setBCoverImage(item.coverImage || "");
+    setBTags((item.tags || []).join(", "));
+    setBContent(item.content || "");
+  }
+
+  async function deleteBlog(id: string) {
+    if (!confirm("Delete this blog post?")) return;
+    try {
+      const authToken = getAuthTokenOrThrow();
+      const res = await fetch(`${API_BASE}/blog/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = (await safeJson(res)) as { message?: string };
+      if (!res.ok) throw new Error(data?.message || "Failed to delete blog post");
+      if (bId === id) resetBlogForm();
+      setMessage("Blog post deleted.");
+      await loadBlogPosts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete blog post");
+    }
+  }
+
   function updateCaseSection(idx: number, patch: Partial<Section>) {
     setCsSections((prev) => prev.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
   }
@@ -391,8 +582,8 @@ export function BackendContentStudio() {
         })),
       };
       const authToken = getAuthTokenOrThrow();
-      const res = await fetch(`${API_BASE}/case-studies`, {
-        method: "POST",
+      const res = await fetch(csId ? `${API_BASE}/case-studies/${csId}` : `${API_BASE}/case-studies`, {
+        method: csId ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
@@ -408,12 +599,9 @@ export function BackendContentStudio() {
         }
         throw new Error(data?.message || "Case study upload failed");
       }
-      setMessage(`Case study uploaded: ${data?.data?.slug || "created"}`);
-      setCsTitle("");
-      setCsDescription("");
-      setCsTags("");
-      setCsHeroImage("");
-      setCsSections([{ heading: "Problem", text: "", image: "" }]);
+      setMessage(csId ? `Case study updated: ${data?.data?.slug || "updated"}` : `Case study uploaded: ${data?.data?.slug || "created"}`);
+      resetCaseForm();
+      await loadCaseStudies();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Case study upload failed");
     } finally {
@@ -480,8 +668,8 @@ export function BackendContentStudio() {
         images: pImages.split(",").map((img) => img.trim()).filter(Boolean),
       };
       const authToken = getAuthTokenOrThrow();
-      const res = await fetch(`${API_BASE}/projects`, {
-        method: "POST",
+      const res = await fetch(pId ? `${API_BASE}/projects/${pId}` : `${API_BASE}/projects`, {
+        method: pId ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
@@ -497,14 +685,9 @@ export function BackendContentStudio() {
         }
         throw new Error(data?.message || "Project upload failed");
       }
-      setMessage(`Project uploaded: ${data?.data?.slug || "created"}`);
-      setPTitle("");
-      setPDescription("");
-      setPTags("");
-      setPThumbnail("");
-      setPGithub("");
-      setPLiveDemo("");
-      setPImages("");
+      setMessage(pId ? `Project updated: ${data?.data?.slug || "updated"}` : `Project uploaded: ${data?.data?.slug || "created"}`);
+      resetProjectForm();
+      await loadProjects();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Project upload failed");
     } finally {
@@ -526,8 +709,8 @@ export function BackendContentStudio() {
         tags: bTags.split(",").map((t) => t.trim()).filter(Boolean),
       };
       const authToken = getAuthTokenOrThrow();
-      const res = await fetch(`${API_BASE}/blog`, {
-        method: "POST",
+      const res = await fetch(bId ? `${API_BASE}/blog/${bId}` : `${API_BASE}/blog`, {
+        method: bId ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
@@ -543,11 +726,9 @@ export function BackendContentStudio() {
         }
         throw new Error(data?.message || "Blog upload failed");
       }
-      setMessage(`Blog post uploaded: ${data?.data?.slug || "created"}`);
-      setBTitle("");
-      setBCoverImage("");
-      setBTags("");
-      setBContent("");
+      setMessage(bId ? `Blog post updated: ${data?.data?.slug || "updated"}` : `Blog post uploaded: ${data?.data?.slug || "created"}`);
+      resetBlogForm();
+      await loadBlogPosts();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Blog upload failed");
     } finally {
@@ -798,8 +979,58 @@ export function BackendContentStudio() {
               disabled={!canSaveCaseStudy || saving}
               className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
             >
-              {saving ? "Saving..." : uploadingImage ? "Preparing images..." : "Upload case study"}
+              {saving
+                ? "Saving..."
+                : uploadingImage
+                  ? "Preparing images..."
+                  : csId
+                    ? "Update case study"
+                    : "Upload case study"}
             </button>
+            <button
+              type="button"
+              onClick={resetCaseForm}
+              className="ml-2 rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-900/40"
+            >
+              New case study
+            </button>
+
+            <div className="mt-6 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-100">Existing case studies</p>
+                <button
+                  type="button"
+                  onClick={() => void loadCaseStudies()}
+                  className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {caseStudies.map((item) => (
+                  <div key={item._id} className="rounded-md border border-slate-800/70 bg-slate-900/40 p-3">
+                    <p className="text-sm text-slate-100">{item.title}</p>
+                    <p className="mt-1 text-xs text-slate-400">/{item.slug}</p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => loadCaseStudyIntoForm(item)}
+                        className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteCaseStudy(item._id)}
+                        className="rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200 hover:bg-red-500/20"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </form>
         ) : null}
 
@@ -879,8 +1110,57 @@ export function BackendContentStudio() {
               disabled={!canSaveProject || saving}
               className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
             >
-              {saving ? "Saving..." : uploadingImage ? "Preparing images..." : "Upload project"}
+              {saving
+                ? "Saving..."
+                : uploadingImage
+                  ? "Preparing images..."
+                  : pId
+                    ? "Update project"
+                    : "Upload project"}
             </button>
+            <button
+              type="button"
+              onClick={resetProjectForm}
+              className="ml-2 rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-900/40"
+            >
+              New project
+            </button>
+            <div className="mt-6 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-100">Existing projects</p>
+                <button
+                  type="button"
+                  onClick={() => void loadProjects()}
+                  className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {projectsList.map((item) => (
+                  <div key={item._id} className="rounded-md border border-slate-800/70 bg-slate-900/40 p-3">
+                    <p className="text-sm text-slate-100">{item.title}</p>
+                    <p className="mt-1 text-xs text-slate-400">/{item.slug}</p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => loadProjectIntoForm(item)}
+                        className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteProject(item._id)}
+                        className="rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200 hover:bg-red-500/20"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </form>
         ) : null}
 
@@ -928,8 +1208,57 @@ export function BackendContentStudio() {
               disabled={!canSaveBlog || saving}
               className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
             >
-              {saving ? "Saving..." : uploadingImage ? "Preparing images..." : "Upload blog post"}
+              {saving
+                ? "Saving..."
+                : uploadingImage
+                  ? "Preparing images..."
+                  : bId
+                    ? "Update blog post"
+                    : "Upload blog post"}
             </button>
+            <button
+              type="button"
+              onClick={resetBlogForm}
+              className="ml-2 rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-900/40"
+            >
+              New blog post
+            </button>
+            <div className="mt-6 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-100">Existing blog posts</p>
+                <button
+                  type="button"
+                  onClick={() => void loadBlogPosts()}
+                  className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                >
+                  Refresh
+                </button>
+              </div>
+              <div className="mt-3 space-y-2">
+                {blogPosts.map((item) => (
+                  <div key={item._id} className="rounded-md border border-slate-800/70 bg-slate-900/40 p-3">
+                    <p className="text-sm text-slate-100">{item.title}</p>
+                    <p className="mt-1 text-xs text-slate-400">/{item.slug}</p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => loadBlogIntoForm(item)}
+                        className="rounded-md border border-slate-700 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-900/40"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteBlog(item._id)}
+                        className="rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200 hover:bg-red-500/20"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </form>
         ) : null}
 
