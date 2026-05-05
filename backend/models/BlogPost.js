@@ -8,8 +8,19 @@ const blogPostSchema = new mongoose.Schema(
     content: { type: String, required: true },
     tags: [{ type: String, trim: true }],
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  {
+    timestamps: { createdAt: true, updatedAt: true },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+blogPostSchema.virtual("attachments", {
+  ref: "File",
+  localField: "_id",
+  foreignField: "parentId",
+  match: { parentType: "blog" },
+});
 
 const BlogPost = mongoose.model("BlogPost", blogPostSchema);
 export default BlogPost;

@@ -3,7 +3,9 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Layout } from "@/components/Layout";
 import { SectionHeader } from "@/components/SectionHeader";
+import { AttachmentList } from "@/components/AttachmentList";
 import { fetchCaseStudyBySlug } from "@/lib/case-studies-api";
+import { fetchAttachments } from "@/lib/files-api";
 import { caseStudies } from "@/lib/portfolio-data";
 
 type PageProps = {
@@ -32,6 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CaseStudyDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const api = await fetchCaseStudyBySlug(slug);
+  const attachments = api ? await fetchAttachments("case-study", api._id) : [];
 
   if (api) {
     return (
@@ -105,6 +108,7 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
                   ))}
                 </div>
               </section>
+              <AttachmentList files={attachments} />
             </aside>
           </div>
         </Layout>

@@ -3,7 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Layout } from "@/components/Layout";
+import { AttachmentList } from "@/components/AttachmentList";
 import { fetchBlogPostBySlug } from "@/lib/blog-api";
+import { fetchAttachments } from "@/lib/files-api";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -32,6 +34,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const { slug } = await params;
   const post = await fetchBlogPostBySlug(slug);
   if (!post) notFound();
+  const attachments = await fetchAttachments("blog", post._id);
 
   return (
     <div className="py-16 sm:py-20">
@@ -72,6 +75,9 @@ export default async function BlogPostPage({ params }: PageProps) {
           className="blog-content mt-10 max-w-none space-y-4 text-sm leading-relaxed text-slate-300/90 [&_a]:text-indigo-200 [&_a]:underline [&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:text-slate-50 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-slate-50 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-slate-50 [&_li]:ml-4 [&_ol]:list-decimal [&_ul]:list-disc"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+        <div className="mt-8">
+          <AttachmentList files={attachments} />
+        </div>
       </Layout>
     </div>
   );

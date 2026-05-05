@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 export type ProjectCardItem = {
+  slug?: string;
   title: string;
   description: string;
   tags: string[];
@@ -44,8 +45,16 @@ export function ProjectCard({
             ))}
           </div>
         </div>
-        {(item.githubUrl || item.liveDemoUrl) ? (
+        {(item.slug || item.githubUrl || item.liveDemoUrl) ? (
           <div className="mt-5 flex flex-wrap gap-4">
+            {item.slug ? (
+              <Link
+                href={`/projects/${item.slug}`}
+                className="inline-flex items-center gap-2 text-sm font-medium text-indigo-200 hover:text-indigo-100 transition-colors"
+              >
+                Details <span aria-hidden>→</span>
+              </Link>
+            ) : null}
             {item.githubUrl ? (
               <Link
                 href={item.githubUrl}

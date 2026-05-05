@@ -11,8 +11,19 @@ const projectSchema = new mongoose.Schema(
     liveDemo: { type: String, default: "" },
     images: [{ type: String }],
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  {
+    timestamps: { createdAt: true, updatedAt: true },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+projectSchema.virtual("attachments", {
+  ref: "File",
+  localField: "_id",
+  foreignField: "parentId",
+  match: { parentType: "project" },
+});
 
 const Project = mongoose.model("Project", projectSchema);
 export default Project;

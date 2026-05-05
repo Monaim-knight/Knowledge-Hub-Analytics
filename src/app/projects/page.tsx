@@ -18,6 +18,7 @@ export default async function ProjectsPage() {
       ? fromApi.map((p) => ({
           key: p.slug,
           item: {
+            slug: p.slug,
             title: p.title,
             description: p.description,
             tags: p.tags ?? [],

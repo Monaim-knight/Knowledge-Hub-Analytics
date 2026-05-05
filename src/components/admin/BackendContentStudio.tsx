@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { EntityFileUploader } from "@/components/admin/EntityFileUploader";
 
 type Section = {
   heading: string;
@@ -994,6 +995,11 @@ export function BackendContentStudio() {
             >
               New case study
             </button>
+            <EntityFileUploader
+              parentType="case-study"
+              parentId={csId}
+              authToken={getStoredToken() || token}
+            />
 
             <div className="mt-6 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
               <div className="flex items-center justify-between">
@@ -1125,6 +1131,11 @@ export function BackendContentStudio() {
             >
               New project
             </button>
+            <EntityFileUploader
+              parentType="project"
+              parentId={pId}
+              authToken={getStoredToken() || token}
+            />
             <div className="mt-6 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-slate-100">Existing projects</p>
@@ -1223,6 +1234,11 @@ export function BackendContentStudio() {
             >
               New blog post
             </button>
+            <EntityFileUploader
+              parentType="blog"
+              parentId={bId}
+              authToken={getStoredToken() || token}
+            />
             <div className="mt-6 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-slate-100">Existing blog posts</p>

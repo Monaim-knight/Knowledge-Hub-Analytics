@@ -18,8 +18,19 @@ const caseStudySchema = new mongoose.Schema(
     heroImage: { type: String, default: "" },
     sections: [caseStudySectionSchema],
   },
-  { timestamps: { createdAt: true, updatedAt: true } }
+  {
+    timestamps: { createdAt: true, updatedAt: true },
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
+
+caseStudySchema.virtual("attachments", {
+  ref: "File",
+  localField: "_id",
+  foreignField: "parentId",
+  match: { parentType: "case-study" },
+});
 
 const CaseStudy = mongoose.model("CaseStudy", caseStudySchema);
 export default CaseStudy;

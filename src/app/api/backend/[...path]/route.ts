@@ -18,9 +18,9 @@ async function proxy(req: NextRequest, method: string, path: string[]) {
   if (authorization) headers.set("authorization", authorization);
   if (cookie) headers.set("cookie", cookie);
 
-  let body: string | undefined;
+  let body: BodyInit | undefined;
   if (!["GET", "HEAD"].includes(method)) {
-    body = await req.text();
+    body = await req.arrayBuffer();
   }
 
   try {

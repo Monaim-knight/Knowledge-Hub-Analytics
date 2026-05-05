@@ -12,6 +12,7 @@ import blogRoutes from "./routes/blogRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import contentDraftRoutes from "./routes/contentDraftRoutes.js";
+import fileRoutes from "./routes/fileRoutes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -25,7 +26,7 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "25mb" }));
 app.use(cookieParser());
 app.use("/uploads", express.static(path.resolve("uploads")));
 
@@ -40,6 +41,7 @@ app.use("/api/blog", blogRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/content-drafts", contentDraftRoutes);
+app.use("/api/files", fileRoutes);
 app.use("/upload", uploadRoutes);
 
 app.use(notFoundHandler);
