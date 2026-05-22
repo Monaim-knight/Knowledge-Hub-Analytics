@@ -19,20 +19,24 @@ async function proxy(req: NextRequest, method: string, path: string[]) {
   if (cookie) headers.set("cookie", cookie);
 
   let body: BodyInit | undefined;
+  const isMultipart = contentType?.toLowerCase().includes("multipart/form-data");
   if (!["GET", "HEAD"].includes(method)) {
-    // Preserve multipart/form-data for file uploads (do not use req.text()).
-    body = await req.arrayBuffer();
+    // JSON and other text bodies: use text(). Multipart file uploads: use arrayBuffer().
+    body = isMultipart ? await req.arrayBuffer() : await req.text();
   }
 
   try {
-    const res = await fetch(targetUrl.toString(), {
+    const fetchInit: RequestInit = {
       method,
       headers,
       body,
       cache: "no-store",
-      // @ts-expect-error duplex required for streaming body in Node 18+
-      duplex: "half",
-    });
+    };
+    if (isMultipart) {
+      // @ts-expect-error duplex required for streaming multipart in Node 18+
+      fetchInit.duplex = "half";
+    }
+    const res = await fetch(targetUrl.toString(), fetchInit);
 
     const text = await res.text();
     // Do not forward Set-Cookie here — Next.js App Router can throw / 500 when appending

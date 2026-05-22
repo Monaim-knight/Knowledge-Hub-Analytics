@@ -227,14 +227,16 @@ export function BackendContentStudio() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      let data: { token?: string; message?: string } = {};
-      try {
-        data = await res.json();
-      } catch {
-        // Fallback message when backend returns non-JSON unexpectedly.
-      }
+      const data = (await safeJson(res)) as {
+        token?: string;
+        message?: string;
+        errors?: Array<{ msg?: string }>;
+      };
       if (!res.ok || !data?.token) {
-        throw new Error(data?.message || "Login failed");
+        const validationMsg = data?.errors?.map((e) => e.msg).filter(Boolean).join("; ");
+        throw new Error(
+          validationMsg || data?.message || `Login failed (${res.status})`
+        );
       }
       const cleanToken = String(data.token).trim();
       localStorage.setItem(TOKEN_KEY, cleanToken);
