@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { uploadBackendMediaFile } from "@/lib/backend-media-upload";
 
 type Section = {
   heading: string;
@@ -8,7 +9,7 @@ type Section = {
   image: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE = "/api/backend";
 const TOKEN_KEY = "portfolio_backend_admin_token";
 
 export function CaseStudyUploader() {
@@ -27,6 +28,7 @@ export function CaseStudyUploader() {
   ]);
 
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [fileLoading, setFileLoading] = useState(false);
   const [result, setResult] = useState<string>("");
   const [error, setError] = useState<string>("");
 
@@ -208,10 +210,41 @@ export function CaseStudyUploader() {
           />
           <input
             className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
-            placeholder="Hero image URL (optional)"
+            placeholder="Hero media URL (optional — image, PDF, etc.)"
             value={heroImage}
             onChange={(e) => setHeroImage(e.target.value)}
           />
+          <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-3">
+            <label className="mb-2 block text-xs text-slate-300">
+              or upload a file (PDF, images, Word, R Markdown, …)
+            </label>
+            <input
+              type="file"
+              accept="*/*"
+              disabled={fileLoading || !token}
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file || !token) return;
+                setFileLoading(true);
+                setError("");
+                try {
+                  const url = await uploadBackendMediaFile(
+                    file,
+                    token,
+                    "portfolio/case-studies"
+                  );
+                  setHeroImage(url);
+                  setResult(`${file.name} uploaded.`);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : "Upload failed");
+                } finally {
+                  setFileLoading(false);
+                  e.target.value = "";
+                }
+              }}
+              className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white"
+            />
+          </div>
 
           <div className="space-y-4 rounded-lg border border-slate-800/70 bg-slate-950/20 p-4">
             <div className="flex items-center justify-between">

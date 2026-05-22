@@ -97,6 +97,42 @@ export function extensionFromMime(mime) {
   return base.replace(/[^a-zA-Z0-9]/g, "") || "bin";
 }
 
+export function extensionFromFileName(fileName) {
+  const dot = String(fileName).lastIndexOf(".");
+  if (dot === -1) return "";
+  return String(fileName).slice(dot).toLowerCase();
+}
+
+export function inferMimeFromFileName(fileName, reportedMime = "") {
+  const mime = String(reportedMime || "").trim().toLowerCase();
+  if (mime && mime !== "application/octet-stream") return mime;
+  const ext = extensionFromFileName(fileName);
+  return EXT_TO_MIME[ext] || mime || "application/octet-stream";
+}
+
+export function isBlockedFileName(fileName) {
+  const ext = extensionFromFileName(fileName);
+  return Boolean(ext && BLOCKED_EXTENSIONS.has(ext));
+}
+
+export function extensionFromFileName(fileName) {
+  const dot = String(fileName).lastIndexOf(".");
+  if (dot === -1) return "";
+  return String(fileName).slice(dot).toLowerCase();
+}
+
+export function inferMimeFromFileName(fileName, reportedMime = "") {
+  const mime = String(reportedMime || "").trim().toLowerCase();
+  if (mime && mime !== "application/octet-stream") return mime;
+  const ext = extensionFromFileName(fileName);
+  return EXT_TO_MIME[ext] || mime || "application/octet-stream";
+}
+
+export function isBlockedFileName(fileName) {
+  const ext = extensionFromFileName(fileName);
+  return Boolean(ext && BLOCKED_EXTENSIONS.has(ext));
+}
+
 export function assertAllowedDataUrlMime(mime) {
   if (!mime || mime === "application/octet-stream") return;
   const sub = mime.split("/")[1] || "";

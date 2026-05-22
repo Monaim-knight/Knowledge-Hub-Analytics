@@ -20,6 +20,7 @@ async function proxy(req: NextRequest, method: string, path: string[]) {
 
   let body: BodyInit | undefined;
   if (!["GET", "HEAD"].includes(method)) {
+    // Preserve multipart/form-data for file uploads (do not use req.text()).
     body = await req.arrayBuffer();
   }
 
@@ -29,6 +30,8 @@ async function proxy(req: NextRequest, method: string, path: string[]) {
       headers,
       body,
       cache: "no-store",
+      // @ts-expect-error duplex required for streaming body in Node 18+
+      duplex: "half",
     });
 
     const text = await res.text();
