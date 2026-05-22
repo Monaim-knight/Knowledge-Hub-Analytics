@@ -3,6 +3,12 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import {
+  extensionFromMime,
+  assertAllowedDataUrlMime,
+  inferMimeFromFileName,
+  isBlockedFileName,
+} from "../utils/fileTypes.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -21,14 +27,40 @@ function toPublicUploadsUrl(relativePath) {
   return `${base.replace(/\/+$/, "")}/uploads/${relativePath.replace(/\\/g, "/")}`;
 }
 
-async function saveDataUrlLocally(dataUrl, folder) {
-  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
-  if (!match) throw new Error("Invalid local image payload");
+function parseDataUrl(dataUrl) {
+  const s = String(dataUrl).trim();
+  const marker = ";base64,";
+  const idx = s.indexOf(marker);
+  if (!s.startsWith("data:") || idx === -1) {
+    throw new Error(
+      "Invalid file payload: expected a base64 data URL (from file upload or paste)"
+    );
+  }
+  const meta = s.slice("data:".length, idx);
+  const mime = meta.split(";")[0].trim() || "application/octet-stream";
+  const base64 = s.slice(idx + marker.length);
+  if (!base64) throw new Error("Invalid file payload: empty base64 data");
+  return { mime, base64 };
+}
 
-  const mime = match[1];
-  const base64 = match[2];
-  const ext = mime.split("/")[1]?.split("+")[0] || "png";
-  const fileName = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
+function cloudinaryResourceType(mime) {
+  if (mime.startsWith("image/")) return "image";
+  if (mime.startsWith("video/")) return "video";
+  return "raw";
+}
+
+/** Save raw bytes to local uploads (PDF, Word, images, etc.). */
+export async function saveBufferLocally(buffer, originalName, mimeType, folder) {
+  if (isBlockedFileName(originalName)) {
+    throw new Error(`File type not allowed: ${originalName}`);
+  }
+  const mime = inferMimeFromFileName(originalName, mimeType);
+  assertAllowedDataUrlMime(mime);
+  const ext = extensionFromMime(mime);
+  const safeBase = String(originalName)
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .slice(0, 80);
+  const fileName = `${Date.now()}-${crypto.randomUUID()}-${safeBase}.${ext}`;
 
   const safeFolder = sanitizeFolder(folder);
   const relativeDir = safeFolder || "portfolio";
@@ -37,33 +69,56 @@ async function saveDataUrlLocally(dataUrl, folder) {
 
   const relativePath = path.join(relativeDir, fileName);
   const fullPath = path.join(uploadsDir, relativePath);
-  await writeFile(fullPath, Buffer.from(base64, "base64"));
+  await writeFile(fullPath, buffer);
   return toPublicUploadsUrl(relativePath);
+}
+
+async function saveDataUrlLocally(dataUrl, folder) {
+  const { mime, base64 } = parseDataUrl(dataUrl);
+  assertAllowedDataUrlMime(mime);
+  return saveBufferLocally(
+    Buffer.from(base64, "base64"),
+    `upload.${extensionFromMime(mime)}`,
+    mime,
+    folder
+  );
 }
 
 export async function uploadToCloudinary(file, folder = "portfolio") {
   if (!file) return null;
 
-  // Accept either an already-hosted URL or a data URI/base64 payload.
   if (typeof file !== "string") {
-    throw new Error("Invalid image payload");
+    throw new Error("Invalid file payload");
   }
 
-  const isRemoteUrl = /^https?:\/\//i.test(file);
+  const trimmed = file.trim();
+  const isRemoteUrl = /^https?:\/\//i.test(trimmed);
   if (isRemoteUrl) {
-    return file;
+    return trimmed;
   }
 
   const storageProvider = (process.env.STORAGE_PROVIDER || "local").toLowerCase();
   if (storageProvider === "local") {
-    return saveDataUrlLocally(file, folder);
+    if (!trimmed.startsWith("data:")) {
+      throw new Error(
+        "Invalid file payload: use file upload or a data: URL, not a local file path"
+      );
+    }
+    return saveDataUrlLocally(trimmed, folder);
   }
 
-  const result = await cloudinary.uploader.upload(file, {
+  const isDataUrl = trimmed.startsWith("data:");
+  let resource_type = "raw";
+  if (isDataUrl) {
+    const { mime } = parseDataUrl(trimmed);
+    assertAllowedDataUrlMime(mime);
+    resource_type = cloudinaryResourceType(mime);
+  }
+
+  const result = await cloudinary.uploader.upload(trimmed, {
     folder,
-    resource_type: "image",
+    resource_type,
   });
 
   return result.secure_url;
 }
-

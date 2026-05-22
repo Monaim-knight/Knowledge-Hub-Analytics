@@ -4,39 +4,30 @@
  */
 import { promises as fs } from "fs";
 import path from "path";
+import {
+  getUploadMaxBytes,
+  inferMimeType,
+  isAllowedUpload,
+} from "@/lib/allowed-file-types";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? path.join(process.cwd(), "uploads");
-
-const ALLOWED_TYPES = [
-  "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "text/csv",
-  "application/json",
-];
-
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
 export function getUploadDir(): string {
   return UPLOAD_DIR;
 }
 
-export function getAllowedTypes(): string[] {
-  return ALLOWED_TYPES;
-}
-
 export function getMaxSize(): number {
-  return MAX_SIZE_BYTES;
+  return getUploadMaxBytes();
 }
 
-export function isAllowedMimeType(mimeType: string): boolean {
-  return ALLOWED_TYPES.includes(mimeType);
+export function isAllowedMimeType(mimeType: string, fileName = ""): boolean {
+  return isAllowedUpload(fileName, mimeType);
 }
+
+export { inferMimeType };
 
 function sanitizeFileName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 200);
 }
 
 export async function storeFile(
@@ -62,7 +53,6 @@ export async function storeFile(
 }
 
 export async function getFilePath(relativePath: string): Promise<string> {
-  // Prevent path traversal (e.g. ../../../etc/passwd)
   const normalized = path.normalize(relativePath).replace(/^(\.\.(\/|\\|$))+/, "");
   if (normalized.startsWith("..") || path.isAbsolute(normalized)) {
     throw new Error("Invalid file path");

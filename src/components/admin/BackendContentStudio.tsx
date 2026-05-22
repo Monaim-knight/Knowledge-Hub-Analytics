@@ -68,15 +68,6 @@ function getStoredToken(): string {
   return (localStorage.getItem(TOKEN_KEY) || "").trim();
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(new Error("Failed to read file"));
-    reader.readAsDataURL(file);
-  });
-}
-
 export function BackendContentStudio() {
   const [mounted, setMounted] = useState(false);
   const [token, setToken] = useState<string>("");
@@ -610,7 +601,23 @@ export function BackendContentStudio() {
     }
   }
 
-  async function handleSingleImageSelect(
+  async function uploadStudioFile(file: File): Promise<string> {
+    const authToken = getAuthTokenOrThrow();
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${API_BASE}/upload/file`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: form,
+    });
+    const data = (await safeJson(res)) as { fileUrl?: string; message?: string };
+    if (!res.ok) throw new Error(data?.message || "File upload failed");
+    const url = data.fileUrl?.trim();
+    if (!url) throw new Error("Upload succeeded but no file URL was returned");
+    return url;
+  }
+
+  async function handleSingleFileSelect(
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (value: string) => void
   ) {
@@ -620,18 +627,18 @@ export function BackendContentStudio() {
     setError("");
     setMessage("");
     try {
-      const dataUrl = await readFileAsDataUrl(file);
-      setter(dataUrl);
-      setMessage(`${file.name} selected. It will upload on save.`);
+      const url = await uploadStudioFile(file);
+      setter(url);
+      setMessage(`${file.name} uploaded.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Image selection failed");
+      setError(err instanceof Error ? err.message : "File upload failed");
     } finally {
       setUploadingImage(false);
       e.target.value = "";
     }
   }
 
-  async function handleMultipleImageSelect(
+  async function handleMultipleFileSelect(
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (values: string[]) => void
   ) {
@@ -641,11 +648,11 @@ export function BackendContentStudio() {
     setError("");
     setMessage("");
     try {
-      const converted = await Promise.all(files.map((file) => readFileAsDataUrl(file)));
-      setter(converted);
-      setMessage(`${files.length} image(s) selected. They will upload on save.`);
+      const urls = await Promise.all(files.map((file) => uploadStudioFile(file)));
+      setter(urls);
+      setMessage(`${files.length} file(s) uploaded.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Image selection failed");
+      setError(err instanceof Error ? err.message : "File upload failed");
     } finally {
       setUploadingImage(false);
       e.target.value = "";
@@ -903,8 +910,8 @@ export function BackendContentStudio() {
               </label>
               <input
                 type="file"
-                accept="image/*"
-                onChange={(e) => handleSingleImageSelect(e, setCsHeroImage)}
+                accept="*/*"
+                onChange={(e) => handleSingleFileSelect(e, setCsHeroImage)}
                 className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
               />
             </div>
@@ -945,17 +952,17 @@ export function BackendContentStudio() {
                   />
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="*/*"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
                       setUploadingImage(true);
                       try {
-                        const dataUrl = await readFileAsDataUrl(file);
-                        updateCaseSection(idx, { image: dataUrl });
-                        setMessage(`${file.name} selected for section image.`);
+                        const url = await uploadStudioFile(file);
+                        updateCaseSection(idx, { image: url });
+                        setMessage(`${file.name} uploaded for section media.`);
                       } catch (err) {
-                        setError(err instanceof Error ? err.message : "Section image selection failed");
+                        setError(err instanceof Error ? err.message : "Section file upload failed");
                       } finally {
                         setUploadingImage(false);
                         e.target.value = "";
@@ -1075,8 +1082,8 @@ export function BackendContentStudio() {
               </label>
               <input
                 type="file"
-                accept="image/*"
-                onChange={(e) => handleSingleImageSelect(e, setPThumbnail)}
+                accept="*/*"
+                onChange={(e) => handleSingleFileSelect(e, setPThumbnail)}
                 className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
               />
             </div>
@@ -1104,10 +1111,10 @@ export function BackendContentStudio() {
               </label>
               <input
                 type="file"
-                accept="image/*"
+                accept="*/*"
                 multiple
                 onChange={(e) =>
-                  handleMultipleImageSelect(e, (values) => setPImages(values.join(",")))
+                  handleMultipleFileSelect(e, (values) => setPImages(values.join(",")))
                 }
                 className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
               />
@@ -1196,8 +1203,8 @@ export function BackendContentStudio() {
               </label>
               <input
                 type="file"
-                accept="image/*"
-                onChange={(e) => handleSingleImageSelect(e, setBCoverImage)}
+                accept="*/*"
+                onChange={(e) => handleSingleFileSelect(e, setBCoverImage)}
                 className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
               />
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { splitAttachmentRefs } from "@/lib/split-attachment-refs";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 const TOKEN_KEY = "portfolio_backend_admin_token";
@@ -80,10 +81,7 @@ export function ProjectUploader() {
         thumbnail: thumbnail.trim(),
         github: github.trim(),
         liveDemo: liveDemo.trim(),
-        images: images
-          .split(",")
-          .map((img) => img.trim())
-          .filter(Boolean),
+        images: splitAttachmentRefs(images),
       };
 
       const res = await fetch(`${API_BASE}/projects`, {

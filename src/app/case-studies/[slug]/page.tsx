@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Layout } from "@/components/Layout";
 import { SectionHeader } from "@/components/SectionHeader";
 import { AttachmentList } from "@/components/AttachmentList";
+import { CaseStudyHeroMedia, CaseStudySectionMedia } from "@/components/CaseStudyMedia";
 import { fetchCaseStudyBySlug } from "@/lib/case-studies-api";
 import { fetchAttachments } from "@/lib/files-api";
 import { caseStudies } from "@/lib/portfolio-data";
@@ -47,19 +47,13 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
           />
 
           {api.heroImage ? (
-            <div className="relative mb-10 aspect-[21/9] w-full overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40">
-              <Image
-                src={api.heroImage}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="(max-width: 1152px) 100vw, 1152px"
-                unoptimized={
-                  api.heroImage.startsWith("http://localhost") ||
-                  api.heroImage.startsWith("http://127.0.0.1")
-                }
-              />
-            </div>
+            <CaseStudyHeroMedia
+              url={api.heroImage}
+              unoptimized={
+                api.heroImage.startsWith("http://localhost") ||
+                api.heroImage.startsWith("http://127.0.0.1")
+              }
+            />
           ) : null}
 
           <div className="grid gap-10 lg:grid-cols-12">
@@ -76,19 +70,13 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
                     {section.text}
                   </p>
                   {section.image ? (
-                    <div className="relative mt-4 aspect-video w-full overflow-hidden rounded-xl border border-slate-800/70">
-                      <Image
-                        src={section.image}
-                        alt=""
-                        fill
-                        className="object-contain bg-slate-950/50"
-                        sizes="(max-width: 768px) 100vw, 768px"
-                        unoptimized={
-                          section.image.startsWith("http://localhost") ||
-                          section.image.startsWith("http://127.0.0.1")
-                        }
-                      />
-                    </div>
+                    <CaseStudySectionMedia
+                      url={section.image}
+                      unoptimized={
+                        section.image.startsWith("http://localhost") ||
+                        section.image.startsWith("http://127.0.0.1")
+                      }
+                    />
                   ) : null}
                 </section>
               ))}

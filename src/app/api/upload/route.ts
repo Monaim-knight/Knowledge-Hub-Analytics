@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { storeFile, isAllowedMimeType, getMaxSize } from "@/lib/storage";
+import {
+  storeFile,
+  isAllowedMimeType,
+  getMaxSize,
+  inferMimeType,
+} from "@/lib/storage";
 import { randomUUID } from "crypto";
 import { ApprovalStatus } from "@prisma/client";
 import { rateLimit, getClientIdentifier } from "@/lib/rate-limit";
@@ -40,17 +45,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const mimeType = file.type || "application/octet-stream";
-    if (!isAllowedMimeType(mimeType)) {
+    const mimeType = inferMimeType(file.name, file.type);
+    if (!isAllowedMimeType(mimeType, file.name)) {
       return NextResponse.json(
-        { error: "File type not allowed. Allowed: PDF, images, CSV, JSON" },
+        { error: "File type not allowed (executable files are blocked)" },
         { status: 400 }
       );
     }
 
     if (file.size > getMaxSize()) {
       return NextResponse.json(
-        { error: "File too large (max 10MB)" },
+        { error: `File too large (max ${Math.round(getMaxSize() / 1024 / 1024)}MB)` },
         { status: 400 }
       );
     }

@@ -17,6 +17,9 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
+// Behind nginx reverse proxy (rate-limit uses X-Forwarded-For)
+app.set("trust proxy", 1);
+
 const configuredOrigins = process.env.CORS_ORIGIN?.split(",").map((v) => v.trim()) || [];
 
 app.use(helmet());

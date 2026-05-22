@@ -83,7 +83,8 @@ export function FileUpload({
       <label className="block text-sm font-medium text-slate-300 mb-1">Attachments</label>
       <input
         type="file"
-        accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.csv,.json"
+        multiple
+        accept="*/*"
         onChange={handleFileSelect}
         disabled={uploading}
         className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-slate-700 file:text-slate-200 file:cursor-pointer hover:file:bg-slate-600"
