@@ -76,13 +76,16 @@ export function BackendContentStudio() {
   const [authLoading, setAuthLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState<
-    "case" | "project" | "blog" | "files" | "write"
+    "case" | "project" | "blog" | "files" | "write" | "home"
   >("case");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [loginHint, setLoginHint] = useState("Not signed in");
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Home / site settings
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
 
   // Case study fields
   const [csTitle, setCsTitle] = useState("");
@@ -353,6 +356,48 @@ export function BackendContentStudio() {
     }
   }, []);
 
+  const loadSiteSettings = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/site-settings`);
+      const data = (await safeJson(res)) as {
+        data?: { profilePhotoUrl?: string };
+        message?: string;
+      };
+      if (!res.ok) throw new Error(data?.message || "Failed to load site settings");
+      setProfilePhotoUrl(data.data?.profilePhotoUrl || "");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load site settings");
+    }
+  }, []);
+
+  async function saveProfilePhoto() {
+    setSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const authToken = getAuthTokenOrThrow();
+      const res = await fetch(`${API_BASE}/site-settings`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ profilePhotoUrl: profilePhotoUrl.trim() }),
+      });
+      const data = (await safeJson(res)) as {
+        data?: { profilePhotoUrl?: string };
+        message?: string;
+      };
+      if (!res.ok) throw new Error(data?.message || "Failed to save photo");
+      setProfilePhotoUrl(data.data?.profilePhotoUrl || "");
+      setMessage("Home photo saved. Refresh the Home page to see it.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save photo");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   useEffect(() => {
     if (!isSignedIn) return;
     if (activeTab === "files") void loadMedia();
@@ -360,7 +405,8 @@ export function BackendContentStudio() {
     if (activeTab === "case") void loadCaseStudies();
     if (activeTab === "project") void loadProjects();
     if (activeTab === "blog") void loadBlogPosts();
-  }, [activeTab, isSignedIn, loadBlogPosts, loadCaseStudies, loadDrafts, loadMedia, loadProjects]);
+    if (activeTab === "home") void loadSiteSettings();
+  }, [activeTab, isSignedIn, loadBlogPosts, loadCaseStudies, loadDrafts, loadMedia, loadProjects, loadSiteSettings]);
 
   function clearDraftForm() {
     setDId("");
@@ -875,7 +921,83 @@ export function BackendContentStudio() {
           >
             Write
           </button>
+          <button
+            onClick={() => setActiveTab("home")}
+            className={`rounded-lg px-3 py-1.5 text-sm ${
+              activeTab === "home"
+                ? "bg-indigo-500 text-white"
+                : "border border-slate-700 text-slate-200 hover:bg-slate-900/50"
+            }`}
+          >
+            Home
+          </button>
         </div>
+
+        {activeTab === "home" ? (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-base font-semibold text-slate-100">
+                Home page photo
+              </h3>
+              <p className="mt-1 text-xs text-slate-400">
+                Upload your professional photo. It appears in the Home hero
+                section.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-slate-800/70 bg-slate-950/20 p-3">
+              <label className="mb-2 block text-xs text-slate-300">
+                Upload a photo (jpg, png, webp)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleSingleFileSelect(e, setProfilePhotoUrl)}
+                className="block w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-indigo-500 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white hover:file:bg-indigo-400"
+              />
+            </div>
+
+            <input
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/30 px-4 py-2.5 text-sm text-slate-100"
+              placeholder="Photo URL (auto-filled after upload, or paste a URL)"
+              value={profilePhotoUrl}
+              onChange={(e) => setProfilePhotoUrl(e.target.value)}
+            />
+
+            {profilePhotoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={profilePhotoUrl}
+                alt="Home photo preview"
+                className="h-48 w-40 rounded-xl border border-slate-800/70 object-cover object-top"
+              />
+            ) : null}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={saveProfilePhoto}
+                disabled={saving || uploadingImage}
+                className="rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-400 disabled:opacity-60"
+              >
+                {saving
+                  ? "Saving..."
+                  : uploadingImage
+                  ? "Uploading..."
+                  : "Save home photo"}
+              </button>
+              {profilePhotoUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setProfilePhotoUrl("")}
+                  className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm text-slate-200 hover:bg-slate-900/50"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {activeTab === "case" ? (
           <form onSubmit={saveCaseStudy} className="space-y-4">

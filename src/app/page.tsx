@@ -9,6 +9,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { fetchCaseStudies } from "@/lib/case-studies-api";
 import { fetchPublishedDrafts } from "@/lib/content-drafts-api";
 import { fetchProjects } from "@/lib/projects-api";
+import { fetchSiteSettings } from "@/lib/site-settings-api";
 import { brand, caseStudies, metrics, projects } from "@/lib/portfolio-data";
 
 export const metadata: Metadata = {
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
+  const siteSettings = await fetchSiteSettings();
   const apiStudies = await fetchCaseStudies();
   const featuredCaseStudies =
     apiStudies.length > 0
@@ -57,7 +59,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <Hero />
+      <Hero profilePhotoUrl={siteSettings.profilePhotoUrl} />
 
       <section className="py-14 sm:py-16">
         <Layout>

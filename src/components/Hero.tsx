@@ -1,10 +1,25 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { brand } from "@/lib/portfolio-data";
 
-export function Hero() {
+type Props = {
+  profilePhotoUrl?: string;
+};
+
+function isLocalBackendUrl(url: string): boolean {
+  return (
+    url.startsWith("http://localhost") ||
+    url.startsWith("http://127.0.0.1") ||
+    url.startsWith("/uploads/")
+  );
+}
+
+export function Hero({ profilePhotoUrl = "" }: Props) {
+  const photoUrl = profilePhotoUrl.trim();
+
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0 -z-10">
@@ -80,18 +95,32 @@ export function Hero() {
               transition={{ duration: 0.65, delay: 0.1, ease: "easeOut" }}
               className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-3xl border border-slate-800/70 bg-gradient-to-b from-slate-900/70 to-slate-950/40 shadow-xl shadow-slate-950/40"
             >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.25),transparent_55%),radial-gradient(circle_at_70%_75%,rgba(148,163,184,0.18),transparent_55%)]" />
-              <div className="absolute inset-0 grid place-items-center">
-                <div className="text-center">
-                  <div className="mx-auto h-20 w-20 rounded-2xl border border-slate-800/70 bg-slate-950/30" />
-                  <p className="mt-4 text-sm font-medium text-slate-200">
-                    Professional photo
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Placeholder (replace with your headshot)
-                  </p>
-                </div>
-              </div>
+              {photoUrl ? (
+                <Image
+                  src={photoUrl}
+                  alt={`${brand.name} — professional photo`}
+                  fill
+                  className="object-cover object-top"
+                  sizes="(max-width: 1024px) 100vw, 384px"
+                  priority
+                  unoptimized={isLocalBackendUrl(photoUrl)}
+                />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(99,102,241,0.25),transparent_55%),radial-gradient(circle_at_70%_75%,rgba(148,163,184,0.18),transparent_55%)]" />
+                  <div className="absolute inset-0 grid place-items-center">
+                    <div className="text-center px-6">
+                      <div className="mx-auto h-20 w-20 rounded-2xl border border-slate-800/70 bg-slate-950/30" />
+                      <p className="mt-4 text-sm font-medium text-slate-200">
+                        Professional photo
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Upload in Studio → Home tab
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         </div>
@@ -99,4 +128,3 @@ export function Hero() {
     </section>
   );
 }
-
