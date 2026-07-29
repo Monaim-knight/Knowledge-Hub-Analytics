@@ -24,11 +24,11 @@ export type Project = {
 
 export const brand = {
   name: "Islam Md Monaim",
-  title: "Data Analyst • Strategy Consultant • Analytics Engineer",
+  title: "Senior Data Analyst · Strategy & Analytics Engineering",
   tagline: "Turning Data Into Strategy",
   summary:
-    "I help organizations make smarter decisions through analytics, dashboards, and business intelligence.",
-  location: "Germany • Remote / On-site",
+    "I help organizations make clearer decisions through KPI frameworks, executive dashboards, and reliable business intelligence.",
+  location: "Germany · Remote / On-site",
   email: "islam.monaim@example.com",
   linkedinUrl: "https://www.linkedin.com/in/islam-md-monaim",
   githubUrl: "https://github.com/islam-md-monaim",
