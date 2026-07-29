@@ -22,119 +22,119 @@ export function Hero({ profilePhotoUrl = "" }: Props) {
   const photoUrl = profilePhotoUrl.trim();
 
   return (
-    <section className="relative overflow-hidden border-b border-slate-800/60">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,rgba(51,65,85,0.35),transparent_55%)]" />
+    <section className="relative overflow-hidden border-b border-slate-800/50 bg-slate-950">
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(15,23,42,1)_0%,rgba(2,6,23,1)_100%)]" />
 
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-14 sm:py-18 lg:py-20">
-        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
-          <div className="order-2 lg:order-1 lg:col-span-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
+        <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-10">
+          {/* LinkedIn-style corporate headshot */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className="shrink-0"
+          >
+            <div className="relative h-[120px] w-[120px] overflow-hidden rounded-full border-[3px] border-slate-200/90 bg-slate-800 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.65)] sm:h-[136px] sm:w-[136px]">
+              {photoUrl ? (
+                <Image
+                  src={photoUrl}
+                  alt={`${brand.name}, Senior Data Analyst`}
+                  fill
+                  className="object-cover object-[center_20%] contrast-[1.03] saturate-[0.96]"
+                  sizes="136px"
+                  priority
+                  quality={92}
+                  unoptimized={isLocalBackendUrl(photoUrl)}
+                />
+              ) : (
+                <div className="absolute inset-0 grid place-items-center bg-slate-800">
+                  <span className="text-2xl font-semibold text-slate-400">
+                    {brand.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .slice(0, 2)
+                      .join("")}
+                  </span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          <div className="min-w-0 flex-1">
             <motion.p
-              initial={{ opacity: 0, y: 8 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, ease: "easeOut" }}
-              className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400"
+              transition={{ duration: 0.4 }}
+              className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500"
             >
-              Senior Data Analyst · Analytics Strategy
+              Senior Analytics Portfolio
             </motion.p>
 
             <motion.h1
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.05, ease: "easeOut" }}
-              className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-slate-50 sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]"
+              transition={{ duration: 0.45, delay: 0.04 }}
+              className="mt-2 text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl lg:text-4xl"
             >
               {brand.name}
             </motion.h1>
 
             <motion.p
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
-              className="mt-3 text-base font-medium text-slate-200 sm:text-lg"
+              transition={{ duration: 0.45, delay: 0.08 }}
+              className="mt-1.5 text-sm font-medium text-slate-300 sm:text-base"
             >
               {brand.title}
             </motion.p>
 
             <motion.p
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
-              className="mt-5 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-[0.95rem]"
+              transition={{ duration: 0.45, delay: 0.12 }}
+              className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400"
             >
-              {brand.summary} Focused on KPI design, decision-ready dashboards,
-              and analytics systems that leadership can trust.
+              Helping leadership teams act on trusted metrics — KPI frameworks,
+              executive dashboards, and analytics systems built for clarity and
+              accountability.
             </motion.p>
 
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
-              className="mt-8 flex flex-wrap items-center gap-3"
+              transition={{ duration: 0.45, delay: 0.16 }}
+              className="mt-6 flex flex-wrap items-center gap-2.5"
             >
               <Link
                 href="/case-studies"
-                className="rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-900 hover:bg-white transition-colors"
+                className="rounded-md bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white hover:bg-[#004182] transition-colors"
               >
                 View case studies
               </Link>
               <Link
                 href="/contact"
-                className="rounded-lg border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-900/50 transition-colors"
+                className="rounded-md border border-slate-600 bg-transparent px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-900 hover:border-slate-500 transition-colors"
               >
-                Discuss a project
+                Get in touch
               </Link>
               <a
-                href="/resume.txt"
-                download
-                className="text-sm font-medium text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
+                href={brand.linkedinUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2 text-sm font-medium text-slate-400 hover:text-[#0A66C2] transition-colors"
               >
-                Download résumé
+                LinkedIn
               </a>
             </motion.div>
 
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.28 }}
-              className="mt-6 text-xs tracking-wide text-slate-500"
+              transition={{ duration: 0.4, delay: 0.22 }}
+              className="mt-4 text-xs text-slate-500"
             >
               {brand.location}
             </motion.p>
-          </div>
-
-          <div className="order-1 lg:order-2 lg:col-span-4">
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.08, ease: "easeOut" }}
-              className="mx-auto flex w-full max-w-[11.5rem] flex-col items-center sm:max-w-[13rem] lg:ml-auto lg:mr-0"
-            >
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.85)] ring-1 ring-white/5">
-                {photoUrl ? (
-                  <Image
-                    src={photoUrl}
-                    alt={`${brand.name} — senior data analyst`}
-                    fill
-                    className="object-cover object-[center_18%]"
-                    sizes="(max-width: 640px) 184px, 208px"
-                    priority
-                    unoptimized={isLocalBackendUrl(photoUrl)}
-                  />
-                ) : (
-                  <div className="absolute inset-0 grid place-items-center bg-slate-900">
-                    <div className="text-center px-4">
-                      <div className="mx-auto h-12 w-12 rounded-full border border-slate-700 bg-slate-950/50" />
-                      <p className="mt-3 text-[11px] text-slate-500">
-                        Studio → Home
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <p className="mt-3 text-center text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">
-                Portfolio
-              </p>
-            </motion.div>
           </div>
         </div>
       </div>
