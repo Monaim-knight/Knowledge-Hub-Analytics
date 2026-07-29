@@ -12,20 +12,11 @@ export function Hero(_props: Props) {
   return (
     <section className="border-b border-slate-800/50 bg-slate-950">
       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-        <motion.p
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500"
-        >
-          Senior Analytics Portfolio
-        </motion.p>
-
         <motion.h1
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.03 }}
-          className="mt-2 text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl"
+          transition={{ duration: 0.4 }}
+          className="text-2xl font-semibold tracking-tight text-slate-50 sm:text-3xl"
         >
           {brand.name}
         </motion.h1>
@@ -33,7 +24,7 @@ export function Hero(_props: Props) {
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.06 }}
+          transition={{ duration: 0.4, delay: 0.04 }}
           className="mt-1.5 text-sm font-medium text-slate-300"
         >
           {brand.title}
@@ -42,7 +33,7 @@ export function Hero(_props: Props) {
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.09 }}
+          transition={{ duration: 0.4, delay: 0.08 }}
           className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400"
         >
           Helping leadership teams act on trusted metrics — KPI frameworks,
