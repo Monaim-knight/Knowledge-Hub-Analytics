@@ -27,28 +27,28 @@ export function Hero({ profilePhotoUrl = "" }: Props) {
 
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-10">
-          {/* LinkedIn-style corporate headshot */}
+          {/* Compact LinkedIn-style circle avatar */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="shrink-0"
           >
-            <div className="relative h-[120px] w-[120px] overflow-hidden rounded-full border-[3px] border-slate-200/90 bg-slate-800 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.65)] sm:h-[136px] sm:w-[136px]">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-slate-300/90 bg-slate-800 shadow-md sm:h-20 sm:w-20">
               {photoUrl ? (
                 <Image
                   src={photoUrl}
                   alt={`${brand.name}, Senior Data Analyst`}
                   fill
-                  className="object-cover object-[center_20%] contrast-[1.03] saturate-[0.96]"
-                  sizes="136px"
+                  className="object-cover object-[center_18%]"
+                  sizes="80px"
                   priority
-                  quality={92}
+                  quality={90}
                   unoptimized={isLocalBackendUrl(photoUrl)}
                 />
               ) : (
                 <div className="absolute inset-0 grid place-items-center bg-slate-800">
-                  <span className="text-2xl font-semibold text-slate-400">
+                  <span className="text-sm font-semibold text-slate-400">
                     {brand.name
                       .split(" ")
                       .map((n) => n[0])
