@@ -25,39 +25,37 @@ export function Hero({ profilePhotoUrl = "" }: Props) {
     <section className="relative overflow-hidden border-b border-slate-800/50 bg-slate-950">
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(15,23,42,1)_0%,rgba(2,6,23,1)_100%)]" />
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <div className="flex flex-col items-start gap-8 sm:flex-row sm:items-center sm:gap-10">
-          {/* Compact LinkedIn-style circle avatar */}
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+        <div className="flex items-start gap-4 sm:items-center sm:gap-5">
+          {/* Fixed 48px circle avatar — cannot grow */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="shrink-0"
+            className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-400/80 bg-slate-800"
+            style={{ width: 48, height: 48, minWidth: 48, maxWidth: 48 }}
           >
-            <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-slate-300/90 bg-slate-800 shadow-md sm:h-20 sm:w-20">
-              {photoUrl ? (
-                <Image
-                  src={photoUrl}
-                  alt={`${brand.name}, Senior Data Analyst`}
-                  fill
-                  className="object-cover object-[center_18%]"
-                  sizes="80px"
-                  priority
-                  quality={90}
-                  unoptimized={isLocalBackendUrl(photoUrl)}
-                />
-              ) : (
-                <div className="absolute inset-0 grid place-items-center bg-slate-800">
-                  <span className="text-sm font-semibold text-slate-400">
-                    {brand.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </span>
-                </div>
-              )}
-            </div>
+            {photoUrl ? (
+              <Image
+                src={photoUrl}
+                alt={`${brand.name}, Senior Data Analyst`}
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-full object-cover object-[center_18%]"
+                style={{ width: 48, height: 48 }}
+                priority
+                quality={85}
+                unoptimized={isLocalBackendUrl(photoUrl)}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-slate-400">
+                {brand.name
+                  .split(" ")
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join("")}
+              </div>
+            )}
           </motion.div>
 
           <div className="min-w-0 flex-1">

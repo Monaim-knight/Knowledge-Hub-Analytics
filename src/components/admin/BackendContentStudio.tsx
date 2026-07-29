@@ -969,7 +969,7 @@ export function BackendContentStudio() {
               <img
                 src={profilePhotoUrl}
                 alt="Home photo preview"
-                className="h-48 w-40 rounded-xl border border-slate-800/70 object-cover object-top"
+                className="h-12 w-12 rounded-full border border-slate-700 object-cover object-top"
               />
             ) : null}
 
