@@ -42,16 +42,9 @@ export default async function ProjectsPage() {
       <Layout>
         <SectionHeader
           eyebrow="Projects"
-          title="Engineering and analytics building blocks"
-          description="Reusable components, practical workbooks, and automation that supports reliable analysis."
+          title="Analytics & engineering projects"
+          description="Selected repositories and analytical studies across SQL, R, Python, MySQL, forecasting, and Tableau."
         />
-
-        {fromApi.length === 0 && staticProjects.length > 0 ? (
-          <p className="mb-6 text-sm text-amber-200/90">
-            Showing sample content — start the backend API to load projects from your
-            database.
-          </p>
-        ) : null}
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {items.map(({ key, item }, idx) => (

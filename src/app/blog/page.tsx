@@ -10,25 +10,6 @@ export const metadata: Metadata = {
     "Notes on analytics engineering, dashboards, KPI design, and strategy-led data work.",
 };
 
-const placeholderPosts = [
-  {
-    title: "Designing KPI systems that leaders trust",
-    description:
-      "A framework for KPI governance, definitions, and decision cadence.",
-    href: "#",
-  },
-  {
-    title: "Dashboards: from reporting to decision support",
-    description: "How to structure executive dashboards for action.",
-    href: "#",
-  },
-  {
-    title: "Data quality checks that pay for themselves",
-    description: "Practical validation patterns you can measure and maintain.",
-    href: "#",
-  },
-];
-
 export default async function BlogPage() {
   const fromApi = await fetchBlogPosts();
 
@@ -39,30 +20,27 @@ export default async function BlogPage() {
           <SectionHeader
             eyebrow="Blog"
             title="Writing, analysis, and playbooks"
-            description="Sample cards below — add posts via the admin API or Studio when the backend is running."
+            description="Articles on analytics, experimentation, forecasting, and KPI design."
           />
-          <p className="mb-6 text-sm text-amber-200/90">
-            No posts in the database yet, or the API is unreachable. Showing placeholders.
-          </p>
-          <div className="grid gap-5 lg:grid-cols-3">
-            {placeholderPosts.map((p) => (
-              <div
-                key={p.title}
-                className="rounded-2xl border border-slate-800/70 bg-slate-900/30 p-6 backdrop-blur"
+          <div className="rounded-2xl border border-slate-800/70 bg-slate-900/30 p-8 backdrop-blur">
+            <p className="text-sm text-slate-300">
+              New articles are coming soon. In the meantime, explore my published
+              case studies and technical projects.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/case-studies"
+                className="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-400 transition-colors"
               >
-                <h3 className="text-base font-semibold tracking-tight text-slate-50">
-                  {p.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300/90">
-                  {p.description}
-                </p>
-                <div className="mt-5">
-                  <span className="inline-flex items-center gap-2 text-sm text-slate-500">
-                    Read (add a post first) <span aria-hidden>→</span>
-                  </span>
-                </div>
-              </div>
-            ))}
+                View Case Studies
+              </Link>
+              <Link
+                href="/projects"
+                className="rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-900 transition-colors"
+              >
+                View Projects
+              </Link>
+            </div>
           </div>
         </Layout>
       </div>

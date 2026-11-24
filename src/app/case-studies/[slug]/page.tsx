@@ -138,9 +138,6 @@ export default async function CaseStudyDetailPage({ params }: PageProps) {
                     Dashboards & insights
                   </div>
                 </div>
-                <p className="mt-4 text-xs text-slate-500">
-                  Placeholder diagram — replace with your real architecture image or SVG.
-                </p>
               </div>
             </section>
 

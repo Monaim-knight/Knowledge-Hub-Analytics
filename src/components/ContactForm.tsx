@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { brand } from "@/lib/portfolio-data";
 
 type FormState = {
   name: string;
@@ -15,19 +16,57 @@ export function ContactForm() {
     email: "",
     message: "",
   });
-  const [status, setStatus] = useState<"idle" | "sent">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const isValid = useMemo(() => {
-    if (!state.name.trim()) return false;
-    if (!state.email.trim()) return false;
-    if (!state.message.trim()) return false;
+    if (state.name.trim().length < 2) return false;
+    if (!state.email.trim().includes("@")) return false;
+    if (state.message.trim().length < 10) return false;
     return true;
   }, [state.email, state.message, state.name]);
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!isValid) return;
-    setStatus("sent");
+    if (!isValid || status === "submitting") return;
+
+    setStatus("submitting");
+    setErrorMessage("");
+
+    try {
+      const res = await fetch("/api/backend/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: state.name.trim(),
+          email: state.email.trim(),
+          message: state.message.trim(),
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        message?: string;
+        errors?: Array<{ msg?: string }>;
+      };
+
+      if (!res.ok || !data.success) {
+        const validationMsg = data.errors?.map((err) => err.msg).filter(Boolean).join("; ");
+        throw new Error(
+          validationMsg || data.message || "Could not send message right now. Please try email directly."
+        );
+      }
+
+      setStatus("sent");
+      setState({ name: "", email: "", message: "" });
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Could not send message right now. Please use the direct email link."
+      );
+    }
   }
 
   const fieldClass =
@@ -48,6 +87,8 @@ export function ContactForm() {
           <input
             className={`${fieldClass} mt-2`}
             placeholder="Your name"
+            minLength={2}
+            maxLength={120}
             value={state.name}
             onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
             required
@@ -68,7 +109,9 @@ export function ContactForm() {
           <label className="text-xs font-medium text-slate-300">Message</label>
           <textarea
             className={`${fieldClass} mt-2 min-h-[140px] resize-y`}
-            placeholder="Tell me what you’re building and what success looks like."
+            placeholder="Share details about the role, project, or analytics challenge (min. 10 characters)."
+            minLength={10}
+            maxLength={5000}
             value={state.message}
             onChange={(e) =>
               setState((s) => ({ ...s, message: e.target.value }))
@@ -80,21 +123,35 @@ export function ContactForm() {
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs text-slate-400">
-          No backend yet — this form is a UI placeholder.
+          Direct email:{" "}
+          <a
+            href={`mailto:${brand.email}`}
+            className="text-indigo-200 hover:text-indigo-100 underline-offset-2 hover:underline"
+          >
+            {brand.email}
+          </a>
         </p>
         <button
           type="submit"
-          disabled={!isValid}
+          disabled={!isValid || status === "submitting"}
           className="rounded-xl bg-indigo-500 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-600/15 hover:bg-indigo-400 disabled:opacity-50 disabled:hover:bg-indigo-500 transition-colors"
         >
-          Submit
+          {status === "submitting" ? "Sending..." : "Send message"}
         </button>
       </div>
 
       {status === "sent" ? (
-        <div className="mt-5 rounded-xl border border-indigo-500/25 bg-indigo-500/10 p-4 text-sm text-indigo-100">
-          Message captured (placeholder). Replace with an email service or API
-          route when you’re ready.
+        <div className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+          Thank you — your message has been received. I will reply as soon as possible.
+        </div>
+      ) : null}
+
+      {status === "error" ? (
+        <div className="mt-5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-100">
+          {errorMessage}{" "}
+          <a href={`mailto:${brand.email}`} className="underline">
+            Email {brand.email}
+          </a>
         </div>
       ) : null}
     </motion.form>
