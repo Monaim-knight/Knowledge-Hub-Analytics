@@ -1,6 +1,11 @@
 import Media from "../models/Media.js";
 import { unlink } from "node:fs/promises";
 import path from "node:path";
+import { uploadsDir } from "../config/multer.js";
+import {
+  isCloudinaryStorage,
+  uploadDiskFileToCloudinary,
+} from "../config/cloudinary.js";
 
 function getPublicBaseUrl(req) {
   const fromEnv = process.env.BACKEND_PUBLIC_URL;
@@ -9,7 +14,18 @@ function getPublicBaseUrl(req) {
 }
 
 async function persistUpload(req, kind) {
-  const fileUrl = `${getPublicBaseUrl(req)}/uploads/${req.file.filename}`;
+  let fileUrl = `${getPublicBaseUrl(req)}/uploads/${req.file.filename}`;
+  if (isCloudinaryStorage()) {
+    try {
+      fileUrl = await uploadDiskFileToCloudinary(
+        req.file.path,
+        req.file.mimetype,
+        "portfolio/uploads"
+      );
+    } finally {
+      await unlink(req.file.path).catch(() => {});
+    }
+  }
   const media = await Media.create({
     url: fileUrl,
     fileName: req.file.filename,
@@ -76,7 +92,7 @@ export async function deleteMedia(req, res, next) {
     if (!item) return res.status(404).json({ success: false, message: "File not found" });
 
     if (item.fileName) {
-      const filePath = path.resolve("uploads", item.fileName);
+      const filePath = path.join(uploadsDir, item.fileName);
       try {
         await unlink(filePath);
       } catch {

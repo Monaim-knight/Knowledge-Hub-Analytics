@@ -1,8 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import multer from "multer";
 
-const uploadsDir = path.resolve("uploads");
+export const uploadsDir = fileURLToPath(new URL("../uploads", import.meta.url));
+
+const parentSegmentMap = {
+  "case-study": "case-studies",
+  project: "projects",
+  blog: "blog-posts",
+};
+
+export function parentSegmentForType(parentType) {
+  return parentSegmentMap[parentType] || sanitizeSegment(parentType, "misc");
+}
 
 function ensureUploadsDir() {
   if (!fs.existsSync(uploadsDir)) {
@@ -51,9 +62,9 @@ const anyFileStorage = multer.diskStorage({
   destination: (req, _file, cb) => {
     try {
       ensureUploadsDir();
-      const parentType = sanitizeSegment(req.params.parentType, "misc");
+      const segment = parentSegmentForType(req.params.parentType);
       const parentId = sanitizeSegment(req.params.parentId, "unassigned");
-      const target = path.join(uploadsDir, parentType, parentId);
+      const target = path.join(uploadsDir, segment, parentId);
       ensureDir(target);
       cb(null, target);
     } catch (err) {

@@ -4,6 +4,11 @@ import File from "../models/File.js";
 import CaseStudy from "../models/CaseStudy.js";
 import Project from "../models/Project.js";
 import BlogPost from "../models/BlogPost.js";
+import { uploadsDir } from "../config/multer.js";
+import {
+  isCloudinaryStorage,
+  uploadDiskFileToCloudinary,
+} from "../config/cloudinary.js";
 
 const parentConfig = {
   "case-study": { model: CaseStudy, segment: "case-studies", modelName: "CaseStudy" },
@@ -39,16 +44,33 @@ export async function uploadFilesForParent(req, res, next) {
     }
 
     const base = getBase(req);
-    const records = req.files.map((file) => ({
-      parentType,
-      parentModel: conf.modelName,
-      parentId,
-      fileName: file.filename,
-      originalName: file.originalname,
-      fileType: file.mimetype || "",
-      fileSize: file.size || 0,
-      fileUrl: `${base}/uploads/${conf.segment}/${parentId}/${file.filename}`,
-    }));
+    const useCloud = isCloudinaryStorage();
+    const records = await Promise.all(
+      req.files.map(async (file) => {
+        let fileUrl = `${base}/uploads/${conf.segment}/${parentId}/${file.filename}`;
+        if (useCloud) {
+          try {
+            fileUrl = await uploadDiskFileToCloudinary(
+              file.path,
+              file.mimetype,
+              `portfolio/${conf.segment}/${parentId}`
+            );
+          } finally {
+            await unlink(file.path).catch(() => {});
+          }
+        }
+        return {
+          parentType,
+          parentModel: conf.modelName,
+          parentId,
+          fileName: file.filename,
+          originalName: file.originalname,
+          fileType: file.mimetype || "",
+          fileSize: file.size || 0,
+          fileUrl,
+        };
+      })
+    );
 
     const created = await File.insertMany(records);
     return res.status(201).json({ success: true, data: created });
@@ -86,7 +108,7 @@ export async function deleteFileById(req, res, next) {
 
     const conf = parentConfig[item.parentType];
     if (conf?.segment) {
-      const filePath = path.resolve("uploads", conf.segment, item.parentId, item.fileName);
+      const filePath = path.join(uploadsDir, conf.segment, String(item.parentId), item.fileName);
       try {
         await unlink(filePath);
       } catch {

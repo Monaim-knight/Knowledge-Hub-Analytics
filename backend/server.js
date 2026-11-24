@@ -3,8 +3,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import path from "node:path";
 import { connectDB } from "./config/db.js";
+import { uploadsDir } from "./config/multer.js";
 import authRoutes from "./routes/authRoutes.js";
 import caseStudyRoutes from "./routes/caseStudyRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -18,12 +18,20 @@ import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
-// Behind nginx reverse proxy (rate-limit uses X-Forwarded-For)
+// Behind nginx / Render / Railway reverse proxy (rate-limit uses X-Forwarded-For)
 app.set("trust proxy", 1);
 
-const configuredOrigins = process.env.CORS_ORIGIN?.split(",").map((v) => v.trim()) || [];
+const configuredOrigins =
+  process.env.CORS_ORIGIN?.split(",")
+    .map((v) => v.trim())
+    .filter(Boolean) || [];
 
-app.use(helmet());
+app.use(
+  helmet({
+    // Allow images and attachments served from /uploads to render on the Vercel frontend origin.
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 app.use(
   cors({
     origin: process.env.NODE_ENV !== "production" ? true : configuredOrigins,
@@ -32,7 +40,7 @@ app.use(
 );
 app.use(express.json({ limit: "25mb" }));
 app.use(cookieParser());
-app.use("/uploads", express.static(path.resolve("uploads")));
+app.use("/uploads", express.static(uploadsDir));
 
 app.get("/api/health", (_req, res) => {
   res.json({ success: true, message: "Backend is running" });
