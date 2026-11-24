@@ -84,6 +84,23 @@ async function saveDataUrlLocally(dataUrl, folder) {
   );
 }
 
+export function isCloudinaryStorage() {
+  return (process.env.STORAGE_PROVIDER || "local").toLowerCase() === "cloudinary";
+}
+
+export async function uploadDiskFileToCloudinary(
+  filePath,
+  mimeType = "",
+  folder = "portfolio/uploads"
+) {
+  const resource_type = cloudinaryResourceType(mimeType || "");
+  const result = await cloudinary.uploader.upload(filePath, {
+    folder,
+    resource_type,
+  });
+  return result.secure_url;
+}
+
 export async function uploadToCloudinary(file, folder = "portfolio") {
   if (!file) return null;
 

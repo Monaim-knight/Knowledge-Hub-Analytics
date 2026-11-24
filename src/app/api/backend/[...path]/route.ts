@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBackendApiBase } from "@/lib/backend-api-base";
 
-const BACKEND_BASE = getBackendApiBase();
-
 async function proxy(req: NextRequest, method: string, path: string[]) {
-  const targetUrl = new URL(`${BACKEND_BASE}/${path.join("/")}`);
+  const backendBase = getBackendApiBase();
+  const targetUrl = new URL(`${backendBase}/${path.join("/")}`);
   req.nextUrl.searchParams.forEach((value, key) => {
     targetUrl.searchParams.set(key, value);
   });
@@ -51,7 +50,8 @@ async function proxy(req: NextRequest, method: string, path: string[]) {
     return NextResponse.json(
       {
         success: false,
-        message: "Backend API is unreachable. Ensure backend runs on port 5000.",
+        message:
+          "Backend API is unreachable. Start the Express backend locally on port 5000, or set BACKEND_PUBLIC_URL / BACKEND_API_BASE_URL in production.",
       },
       { status: 502 }
     );

@@ -1,10 +1,57 @@
 # Deployment & Security Guide
 
-This guide covers deploying your Portfolio app live and keeping it secure.
+This guide covers running your Portfolio app locally and deploying both the **Next.js frontend** (Vercel) and the **Express + MongoDB backend** (`backend/`) so `/studio` uploads work live.
 
 ---
 
-## Deployment Options
+## Deploying the Express Backend + Connecting Vercel (Required for `/studio` Uploads)
+
+Vercel only hosts the Next.js frontend. To upload case studies, projects, blog posts, writing drafts, and attachments on your live site, deploy `backend/` separately and point Vercel at it:
+
+### Step 1: Database (MongoDB Atlas — free tier)
+1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas).
+2. Create a database user and allow network access (`0.0.0.0/0` for Render/Railway).
+3. Copy your connection string (`MONGO_URI`), e.g.:
+   `mongodb+srv://<user>:<password>@<cluster>.mongodb.net/portfolio_db?retryWrites=true&w=majority`
+
+### Step 2: Persistent File Storage (Cloudinary — free tier, recommended)
+Free Node hosts (like Render free tier) wipe local disk on restart/redeploy. To keep uploaded images, PDFs, and attachments permanently:
+1. Create a free account at [cloudinary.com](https://cloudinary.com) and copy your `Cloud Name`, `API Key`, and `API Secret`.
+2. Set `STORAGE_PROVIDER=cloudinary` along with the `CLOUDINARY_*` env vars below.
+
+### Step 3: Deploy `backend/` on Render (or Railway)
+You can deploy automatically using the included [`render.yaml`](./render.yaml) Blueprint on Render (**New → Blueprint**), or create a **Web Service** manually pointing to this GitHub repository:
+   - **Root Directory**: `backend`
+   - **Build Command**: `npm ci`
+   - **Start Command**: `npm run seed:admin && npm start` *(idempotent: creates your admin user on first boot, skips if already created)*
+   - **Health Check Path**: `/api/health`
+2. Add these Environment Variables on Render/Railway:
+   - `NODE_ENV=production`
+   - `MONGO_URI=<your MongoDB Atlas URI>`
+   - `JWT_SECRET=<random 32+ char string>`
+   - `JWT_EXPIRES_IN=7d`
+   - `ADMIN_EMAIL=<your login email>`
+   - `ADMIN_PASSWORD=<your strong password>`
+   - `CORS_ORIGIN=https://<your-vercel-domain>.vercel.app`
+   - `BACKEND_PUBLIC_URL=https://<your-backend-service>.onrender.com`
+   - `STORAGE_PROVIDER=cloudinary` *(or `local` if you attach a persistent disk)*
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` *(when using Cloudinary)*
+3. Verify `https://<your-backend-service>.onrender.com/api/health` returns `{"success":true,"message":"Backend is running"}`.
+
+### Step 4: Connect Your Live Vercel Frontend
+In Vercel → **Project → Settings → Environment Variables**, add:
+- `BACKEND_PUBLIC_URL` = `https://<your-backend-service>.onrender.com`
+- `BACKEND_API_BASE_URL` = `https://<your-backend-service>.onrender.com/api`
+- `NEXTAUTH_SECRET` = `<random 32+ char string>`
+- `NEXTAUTH_URL` = `https://<your-vercel-domain>.vercel.app`
+
+Then **Redeploy** on Vercel and visit `https://<your-vercel-domain>.vercel.app/studio` to sign in and upload your works.
+
+> **Note on upload sizes on Vercel:** Vercel Serverless Functions cap request bodies at **4.5 MB** when proxying through `/api/backend/*`. Keep individual uploads under ~4 MB when uploading through Vercel, or host the Next.js app on Railway/Render/VPS for larger files.
+
+---
+
+## Deployment Options (Optional PostgreSQL Features: `/posts`, `/dashboards`, `/discussions`, `/topics`)
 
 ### Recommended: Vercel + Neon/Supabase (PostgreSQL)
 

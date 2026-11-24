@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { splitAttachmentRefs } from "@/lib/split-attachment-refs";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE = "/api/backend";
 const TOKEN_KEY = "portfolio_backend_admin_token";
 
 export function ProjectUploader() {
