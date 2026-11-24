@@ -1,24 +1,22 @@
 Islam Md Monaim
-Data Analyst • Strategy Consultant • Analytics Engineer
+Data Analyst | Marketing, Customer & Economic Analytics
+Location: Germany (Remote / Hybrid / On-site)
 
 SUMMARY
-Turning data into strategy through analytics, dashboards, and business intelligence.
+Data analyst based in Germany using SQL, R, Python, MySQL, and Tableau to transform complex data into clear, decision-oriented insights.
 
-CORE STRENGTHS
-- KPI design and governance
-- Enterprise modeling and metric definitions
-- Dashboard design (executive + operational)
-- Automation (data pipelines, reporting workflows)
+CORE TOOLKIT
+- SQL, MySQL, BigQuery, Data Cleaning & Modeling
+- R (tidyverse), Python, Statistical Analysis, Forecasting, A/B Testing
+- Tableau, KPI Development, Executive Dashboard Design
 
-EDUCATION
-- Master’s Degree — Data Science
-- Master’s Degree — Analytics
-- Master’s Degree — International Trade
+ACADEMIC BACKGROUND
+- Data Science & Policy
+- International Trade (Master's level)
 
 CONTACT
-Email: islam.monaim@example.com
-LinkedIn: https://www.linkedin.com/in/islam-md-monaim
-GitHub: https://github.com/islam-md-monaim
-
-Note: Replace this placeholder with your full PDF resume when ready.
+Email: monaimk07@gmail.com
+LinkedIn: https://www.linkedin.com/in/md-monaim-islam-295928161/
+GitHub: https://github.com/Monaim-knight
+Portfolio: https://knowledge-hub-analytics.vercel.app
 

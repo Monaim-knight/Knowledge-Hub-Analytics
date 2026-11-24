@@ -35,13 +35,6 @@ export default async function CaseStudiesPage() {
           description="Each case study is structured around the decision problem, the system design, and measurable outcomes."
         />
 
-        {fromApi.length === 0 && staticCaseStudies.length > 0 ? (
-          <p className="mb-6 text-sm text-amber-200/90">
-            Showing sample content — start the backend API to load case studies from
-            your database.
-          </p>
-        ) : null}
-
         <div className="grid gap-5 lg:grid-cols-3">
           {items.map((cs, idx) => (
             <CaseStudyCard

@@ -1,104 +1,127 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Layout } from "@/components/Layout";
 import { SectionHeader } from "@/components/SectionHeader";
+import { brand } from "@/lib/portfolio-data";
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Academic background, analytics and consulting expertise, and mission-driven work focused on KPI design, dashboards, and automation.",
+    "Data analyst based in Germany combining Data Science & Policy with International Trade — SQL, R, Python, MySQL, and Tableau.",
 };
 
 export default function AboutPage() {
-  const timeline = [
+  const approach = [
     {
-      period: "2024–Now",
-      title: "Analytics Engineering & Strategy",
+      step: "01",
+      title: "Business Problem & Decision Framing",
       description:
-        "Building end-to-end analytics systems: modeling, KPI definitions, dashboards, and automation for decision-making.",
+        "Define the exact commercial or policy decision before choosing an analytical method or tool.",
     },
     {
-      period: "2021–2024",
-      title: "Consulting & Research",
+      step: "02",
+      title: "Data Provenance, Cleaning & Validation",
       description:
-        "Delivered analytical frameworks and evidence-based insights across business and policy topics with stakeholder-ready outputs.",
+        "Audit completeness, duplicates, missing values, definitions, and data quality assumptions before modeling.",
     },
     {
-      period: "2018–2021",
-      title: "Foundations in Data & International Trade",
+      step: "03",
+      title: "Statistical Reasoning, Forecasting & Experimentation",
       description:
-        "Combined quantitative methods with market and trade analysis—forming a practical bridge between strategy and data.",
+        "Match the method to the question — SQL modeling, A/B testing, regression, time-series forecasting, or causal inference.",
+    },
+    {
+      step: "04",
+      title: "Executive Dashboards & Actionable Recommendations",
+      description:
+        "Translate technical results, uncertainty, and trade-offs into clear Tableau dashboards and concrete next steps.",
     },
   ];
 
   const skills = [
-    "KPI design & metric governance",
-    "Enterprise data modeling",
-    "Dashboarding (Power BI / Tableau)",
-    "SQL (joins, windows, performance patterns)",
-    "Python automation & analysis",
-    "Data quality checks & validation",
-    "Stakeholder communication",
-    "Documentation & enablement",
+    "SQL & MySQL",
+    "R & tidyverse",
+    "Python (pandas, modeling)",
+    "Tableau & BI Dashboards",
+    "BigQuery & Data Modeling",
+    "A/B Testing & Experimentation",
+    "Time-Series Forecasting",
+    "Marketing & Funnel Analytics",
+    "Customer & Churn Analytics",
+    "Economic & Trade Analysis",
   ];
 
-  const certifications = [
-    "Google Data Analytics (placeholder)",
-    "Microsoft Power BI (placeholder)",
-    "SQL & Analytics Engineering (placeholder)",
+  const targetRoles = [
+    "Data Analyst",
+    "Marketing Analytics",
+    "Product Analytics",
+    "Business Intelligence Analyst",
+    "Digital & Customer Analytics",
   ];
 
   return (
     <div className="py-16 sm:py-20">
       <Layout>
         <SectionHeader
-          eyebrow="Biography"
-          title="Data, strategy, and systems thinking"
-          description="I build data systems that drive business impact—through clear KPIs, reliable models, and dashboards that support action."
+          eyebrow="About"
+          title="Decision-oriented data & economic analytics"
+          description="Turning complex commercial, customer, and economic data into clear, reproducible insights."
         />
 
         <div className="grid gap-10 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <div className="space-y-4 text-sm leading-relaxed text-slate-300/90">
               <p>
-                My background combines analytics engineering with strategy
-                consulting. I focus on practical outcomes: teams need consistent
-                metrics, governed definitions, and automation that reduces manual
-                reporting while increasing trust.
+                I am a data analyst based in Germany using{" "}
+                <strong className="font-medium text-slate-100">
+                  SQL, R, Python, MySQL, and Tableau
+                </strong>{" "}
+                to transform complex datasets into clear, decision-oriented
+                insights.
               </p>
               <p>
-                Academically, I’ve pursued three master’s degrees across Data
-                Science, Analytics, and International Trade. This mix helps me
-                translate business priorities into measurable KPI frameworks and
-                robust data models.
+                My academic background combines{" "}
+                <strong className="font-medium text-slate-100">
+                  Data Science &amp; Policy
+                </strong>{" "}
+                with master’s-level studies in{" "}
+                <strong className="font-medium text-slate-100">
+                  International Trade
+                </strong>
+                . This perspective helps me connect quantitative methods with
+                commercial reality across marketing performance, customer
+                behavior, experimentation, forecasting, and macroeconomic
+                analysis.
               </p>
               <p>
-                Strengths: KPI design, enterprise modeling, dashboards, and
-                workflow automation—delivered with professional documentation
-                and a bias toward clarity.
+                My work covers the full analytical lifecycle: business problem
+                definition, data quality validation, SQL modeling, statistical
+                analysis, interactive Tableau dashboarding, and stakeholder-ready
+                recommendations.
               </p>
             </div>
 
             <div className="mt-10">
               <SectionHeader
-                eyebrow="Timeline"
-                title="Experience highlights"
-                description="A structured, outcome-first progression across analytics, consulting, and research."
+                eyebrow="Methodology"
+                title="How I approach analytics"
+                description="Reproducible workflows designed around data quality, validation, and real business decisions."
               />
 
-              <ol className="space-y-5">
-                {timeline.map((t) => (
+              <ol className="space-y-4">
+                {approach.map((item) => (
                   <li
-                    key={t.period}
+                    key={item.step}
                     className="rounded-2xl border border-slate-800/70 bg-slate-900/30 p-6 backdrop-blur"
                   >
                     <p className="text-xs font-medium text-indigo-200/90">
-                      {t.period}
+                      Step {item.step}
                     </p>
                     <p className="mt-2 text-sm font-semibold text-slate-50">
-                      {t.title}
+                      {item.title}
                     </p>
                     <p className="mt-2 text-sm text-slate-300/90">
-                      {t.description}
+                      {item.description}
                     </p>
                   </li>
                 ))}
@@ -108,7 +131,9 @@ export default function AboutPage() {
 
           <aside className="lg:col-span-5">
             <div className="rounded-2xl border border-slate-800/70 bg-slate-900/30 p-6 backdrop-blur">
-              <p className="text-sm font-semibold text-slate-50">Skills</p>
+              <p className="text-sm font-semibold text-slate-50">
+                Technical Toolkit
+              </p>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {skills.map((s) => (
                   <div
@@ -123,28 +148,46 @@ export default function AboutPage() {
 
             <div className="mt-6 rounded-2xl border border-slate-800/70 bg-slate-900/30 p-6 backdrop-blur">
               <p className="text-sm font-semibold text-slate-50">
-                Certifications
+                Target Roles in Germany
               </p>
               <ul className="mt-4 space-y-2 text-sm text-slate-300/90">
-                {certifications.map((c) => (
-                  <li key={c} className="flex items-start gap-2">
+                {targetRoles.map((role) => (
+                  <li key={role} className="flex items-start gap-2">
                     <span className="mt-0.5 text-indigo-200" aria-hidden>
                       •
                     </span>
-                    <span>{c}</span>
+                    <span>{role}</span>
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 text-xs text-slate-500">
-                Replace placeholders with your verified certifications.
+              <p className="mt-4 text-xs text-slate-400">
+                {brand.location}
               </p>
             </div>
 
             <div className="mt-6 rounded-2xl border border-indigo-500/25 bg-indigo-500/10 p-6">
-              <p className="text-sm font-semibold text-indigo-100">Mission</p>
-              <p className="mt-2 text-sm text-indigo-100/90">
-                Build data systems that drive business impact.
+              <p className="text-sm font-semibold text-indigo-100">
+                Get in touch
               </p>
+              <p className="mt-2 text-sm text-indigo-100/90">
+                Interested in discussing an analytics role or project in Germany?
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/contact"
+                  className="rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-400 transition-colors"
+                >
+                  Contact me
+                </Link>
+                <a
+                  href={brand.linkedinUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg border border-indigo-400/30 px-4 py-2 text-xs font-medium text-indigo-100 hover:bg-indigo-500/20 transition-colors"
+                >
+                  LinkedIn ↗
+                </a>
+              </div>
             </div>
           </aside>
         </div>

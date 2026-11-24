@@ -36,9 +36,7 @@ export function Hero(_props: Props) {
           transition={{ duration: 0.4, delay: 0.08 }}
           className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400"
         >
-          Helping leadership teams act on trusted metrics — KPI frameworks,
-          executive dashboards, and analytics systems built for clarity and
-          accountability.
+          {brand.summary}
         </motion.p>
 
         <motion.div
@@ -54,8 +52,14 @@ export function Hero(_props: Props) {
             Case studies
           </Link>
           <Link
-            href="/contact"
+            href="/projects"
             className="rounded-md border border-slate-600 px-3.5 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-900 transition-colors"
+          >
+            Projects
+          </Link>
+          <Link
+            href="/contact"
+            className="rounded-md border border-slate-700 px-3.5 py-2 text-sm font-medium text-slate-200 hover:border-slate-500 hover:bg-slate-900 transition-colors"
           >
             Contact
           </Link>
@@ -68,11 +72,12 @@ export function Hero(_props: Props) {
             LinkedIn
           </a>
           <a
-            href="/resume.txt"
-            download
+            href={brand.githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-1.5 text-sm font-medium text-slate-400 hover:text-slate-200 transition-colors"
           >
-            Résumé
+            GitHub
           </a>
         </motion.div>
 

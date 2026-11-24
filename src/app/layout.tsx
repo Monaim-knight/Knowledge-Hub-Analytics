@@ -4,18 +4,23 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SessionProvider } from "@/components/providers/SessionProvider";
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXTAUTH_URL ||
+  "https://knowledge-hub-analytics.vercel.app";
+
 export const metadata: Metadata = {
   title: {
-    default: "Islam Md Monaim — Data Analyst & Analytics Engineer",
+    default: "Islam Md Monaim — Data Analyst (Germany)",
     template: "%s — Islam Md Monaim",
   },
   description:
-    "Professional portfolio of Islam Md Monaim — Data Analyst • Strategy Consultant • Analytics Engineer. Turning data into strategy through analytics, dashboards, and business intelligence.",
-  metadataBase: new URL("http://localhost:3000"),
+    "Portfolio of Islam Md Monaim — Data Analyst based in Germany specializing in SQL, R, Python, MySQL, Tableau, marketing analytics, forecasting, and business intelligence.",
+  metadataBase: new URL(siteUrl),
   openGraph: {
-    title: "Islam Md Monaim — Turning Data Into Strategy",
+    title: "Islam Md Monaim — Data Analyst | Marketing, Customer & Economic Analytics",
     description:
-      "Analytics, dashboards, KPI design, enterprise modeling, and automation for measurable business impact.",
+      "Decision-oriented analytics projects across SQL, R, Python, MySQL, and Tableau — from data quality and statistical modeling to executive dashboards.",
     type: "website",
   },
   robots: { index: true, follow: true },

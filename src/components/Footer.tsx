@@ -40,7 +40,7 @@ export function Footer() {
           <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} {brand.name}. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex flex-wrap items-center gap-4 text-xs">
             <Link
               href={brand.linkedinUrl}
               target="_blank"
@@ -63,6 +63,21 @@ export function Footer() {
             >
               Email
             </a>
+            <span className="text-slate-700" aria-hidden>
+              |
+            </span>
+            <Link
+              href="/impressum"
+              className="text-slate-400 hover:text-slate-200"
+            >
+              Impressum
+            </Link>
+            <Link
+              href="/datenschutz"
+              className="text-slate-400 hover:text-slate-200"
+            >
+              Datenschutz
+            </Link>
           </div>
         </div>
       </div>

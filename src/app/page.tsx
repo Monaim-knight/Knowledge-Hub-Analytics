@@ -106,11 +106,19 @@ export default async function HomePage() {
 
       <section className="py-14 sm:py-16">
         <Layout>
-          <SectionHeader
-            eyebrow="Projects"
-            title="Technical work"
-            description="A sample of tools, workbooks, dashboards, and automation scripts."
-          />
+          <div className="flex items-end justify-between gap-6">
+            <SectionHeader
+              eyebrow="Projects"
+              title="Featured analytics work"
+              description="End-to-end projects across marketing analytics, forecasting, fraud detection, and BI dashboards."
+            />
+            <Link
+              href="/projects"
+              className="hidden rounded-xl border border-slate-800/80 bg-slate-950/20 px-4 py-2 text-sm font-medium text-slate-100 hover:bg-slate-900/40 hover:border-indigo-500/40 transition-colors sm:inline-flex"
+            >
+              View all
+            </Link>
+          </div>
           <div className="grid gap-5 lg:grid-cols-3">
             {featuredProjects.map((p, idx) => (
               <ProjectCard
@@ -129,27 +137,23 @@ export default async function HomePage() {
         </Layout>
       </section>
 
-      <section className="py-8 sm:py-10">
-        <Layout>
-          <div className="flex items-end justify-between gap-6">
-            <SectionHeader
-              eyebrow="Writing"
-              title="Published notes"
-              description="Selected long-form writing published from the Studio."
-            />
-            <Link
-              href="/writing"
-              className="hidden rounded-xl border border-slate-800/80 bg-slate-950/20 px-4 py-2 text-sm font-medium text-slate-100 hover:bg-slate-900/40 hover:border-indigo-500/40 transition-colors sm:inline-flex"
-            >
-              View all
-            </Link>
-          </div>
+      {featuredWriting.length > 0 ? (
+        <section className="py-8 sm:py-10">
+          <Layout>
+            <div className="flex items-end justify-between gap-6">
+              <SectionHeader
+                eyebrow="Writing"
+                title="Published notes"
+                description="Selected analytical notes and deep dives."
+              />
+              <Link
+                href="/writing"
+                className="hidden rounded-xl border border-slate-800/80 bg-slate-950/20 px-4 py-2 text-sm font-medium text-slate-100 hover:bg-slate-900/40 hover:border-indigo-500/40 transition-colors sm:inline-flex"
+              >
+                View all
+              </Link>
+            </div>
 
-          {featuredWriting.length === 0 ? (
-            <p className="text-sm text-slate-400">
-              No published writing yet. Publish from Studio → Write tab.
-            </p>
-          ) : (
             <div className="grid gap-5 lg:grid-cols-3">
               {featuredWriting.map((post) => (
                 <Link
@@ -164,9 +168,9 @@ export default async function HomePage() {
                 </Link>
               ))}
             </div>
-          )}
-        </Layout>
-      </section>
+          </Layout>
+        </section>
+      ) : null}
 
       <section className="py-14 sm:py-16">
         <Layout>

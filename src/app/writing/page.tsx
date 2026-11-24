@@ -18,7 +18,7 @@ export default async function WritingPage() {
         <SectionHeader
           eyebrow="Writing"
           title="Published notes"
-          description="Long-form posts written in the Studio Write tab."
+          description="Long-form analytical notes, methodology write-ups, and research summaries."
         />
 
         {items.length === 0 ? (
