@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { Analytics } from "@vercel/analytics/next";
 import { brand } from "@/lib/portfolio-data";
 
 const siteUrl = (
@@ -103,6 +104,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
