@@ -44,6 +44,14 @@ export const metadata: Metadata = {
     type: "website",
   },
   robots: { index: true, follow: true },
+  verification: {
+    ...(process.env.GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+      : {}),
+    other: {
+      "msvalidate.01": "36223596F2526919D5EBF668CA9BB44A",
+    },
+  },
 };
 
 const personJsonLd = {
