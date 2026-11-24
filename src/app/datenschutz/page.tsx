@@ -64,11 +64,17 @@ export default function DatenschutzPage() {
 
           <section>
             <h2 className="text-base font-semibold text-slate-100">
-              4. Cookies &amp; Tracking
+              4. Cookies &amp; Webanalyse (Vercel Web Analytics)
             </h2>
             <p className="mt-2">
               Diese Website verwendet keine Werbe-Cookies und kein
-              Drittanbieter-Tracking (kein Google Analytics, keine Werbenetzwerke).
+              Drittanbieter-Werbetracking (kein Google Analytics). Zur
+              statistischen Auswertung von Seitenaufrufen wird{" "}
+              <strong className="font-medium text-slate-100">
+                Vercel Web Analytics
+              </strong>{" "}
+              ohne Cookies und ohne Speicherung personenbezogener Profile
+              eingesetzt (Art. 6 Abs. 1 lit. f DSGVO).
             </p>
           </section>
 
